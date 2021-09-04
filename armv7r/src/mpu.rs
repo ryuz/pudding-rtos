@@ -1,8 +1,11 @@
 #![allow(dead_code)]
+#![cfg(target_arch = "arm")]
 
+/// 割り込み待ち
 pub unsafe fn wfi() {
     asm!("wfi");
 }
+
 
 ///  分岐予測有効化
 pub unsafe fn enable_bpredict() {
