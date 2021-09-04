@@ -1,5 +1,5 @@
 
-# Rust版 サンプル
+# ZynqMP RPU 上で 組込みRustのお勉強
 
 
 ## 事前準備
@@ -39,27 +39,3 @@ rustup target add armv7r-none-eabi
 cargo install cargo-binutils
 rustup component add llvm-tools-preview
 ```
-
-
-## ビルド
-
-```
-cargo build
-```
-
-
-## 実行
-
-APUから
-
-```
-./run.sh
-```
-
-で起動し、
-
-```
-./stop.sh
-```
-
-で停止します。
