@@ -1,9 +1,13 @@
 use cc::Build;
-use std::{env, error::Error, fs::File, io::Write, path::PathBuf};
+//use std::{env, error::Error, fs::File, io::Write, path::PathBuf};
+use std::{env, error::Error, path::PathBuf};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // ソースファイル
-    let src_files = vec![["src/vectors.S", "vectors"], ["src/startup.S", "startup"]];
+    let src_files = vec![
+        ["src/asm/kernel_context_create.S", "kernel_context_create"],
+        ["src/asm/kernel_context_switch.S", "kernel_context_switch"],
+    ];
 
     for name in src_files.into_iter() {
         Build::new()
@@ -22,7 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo:rustc-link-search={}", out_dir.display());
 
     // リンカスクリプトををビルドディレクトリに
-    File::create(out_dir.join("link.lds"))?.write_all(include_bytes!("link.lds"))?;
+    //  File::create(out_dir.join("link.lds"))?.write_all(include_bytes!("link.lds"))?;
 
     Ok(())
 }

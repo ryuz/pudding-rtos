@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-
 pub unsafe fn wfi() {
     asm!("wfi");
 }
@@ -180,8 +179,6 @@ pub unsafe fn mpu_set_data_region_access_control(v: u32) {
     );
 }
 
-
-
 bitflags! {
     pub struct MpuSize: u32 {
         const DISABLE = 0;
@@ -238,10 +235,14 @@ bitflags! {
     }
 }
 
-pub unsafe fn set_mpu_data_region(region_num: u32, address: u32, size: MpuSize, access_control: MpuAc) {
+pub unsafe fn set_mpu_data_region(
+    region_num: u32,
+    address: u32,
+    size: MpuSize,
+    access_control: MpuAc,
+) {
     mpu_set_data_region_number(region_num);
     mpu_set_data_region_base_address(address);
     mpu_set_data_region_size(size.bits());
     mpu_set_data_region_access_control(access_control.bits());
 }
-

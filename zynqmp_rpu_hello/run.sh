@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TARGET=zynqmp_rpu_rust_2
+TARGET=zynqmp_rpu_hello
 
 sudo cp target/armv7r-none-eabi/debug/$TARGET /lib/firmware
 #sudo cp target/armv7r-none-eabi/release/$TARGET /lib/firmware

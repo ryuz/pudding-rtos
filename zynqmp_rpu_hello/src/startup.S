@@ -22,7 +22,6 @@
                 .extern     ___abt_stack_end
                 .extern     ___und_stack_end
 
-//              .extern     hw_setup
                 .extern     bootstrap
                 .extern     main
 
@@ -116,8 +115,7 @@ _rst_handler:
                 isb
 
                 /* H/W 初期化 */
-//              bl      hw_setup
-                bl      bootstrap
+//              bl      bootstrap
 
                 /* BSS領域の初期化 */
                 ldr     r0, =___bss
