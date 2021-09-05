@@ -1,5 +1,5 @@
 // ハードウェアセットアップ
-use armv7r::mpu::*;
+use kernel::arm::mpu::*;
 use core::ptr;
 
 #[no_mangle]

@@ -10,18 +10,20 @@ fn main() -> Result<(), Box<dyn Error>>
     {
         use std::fs::File;
         use std::io::Write;
-        let mut file = File::create("hoge_.txt")?;
-        write!(file, "{}", target)?;
+        let mut file = File::create("env_list_.txt")?;
+        for (key, value) in env::vars() {
+            write!(file, "{}: {}\n", key, value)?;
+        }
         file.flush()?;
     }*/
 
     if target.contains("armv7r") {
         // ソースファイル
         let src_files = vec![
-            ["src/asm/kernel_context_create.S", "kernel_context_create"],
-            ["src/asm/kernel_context_switch.S", "kernel_context_switch"],
+            ["src/arm/asm/kernel_context_create.S", "kernel_context_create"],
+            ["src/arm/asm/kernel_context_switch.S", "kernel_context_switch"],
         ];
-
+        
         for name in src_files.into_iter() {
             Build::new()
                 .flag("-mfpu=vfpv3-d16")

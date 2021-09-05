@@ -3,7 +3,7 @@
  */
 
 
-#include "arm_v7r.inc"
+#include "arm.inc"
 
 
                 .text

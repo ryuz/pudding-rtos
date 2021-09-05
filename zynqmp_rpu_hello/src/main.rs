@@ -23,13 +23,13 @@ fn panic(_panic: &PanicInfo<'_>) -> ! {
     loop {}
 }
 
-use armv7r::context;
+use kernel::context;
 
-static mut TASK0_STACK: [isize; 256] = [0; 256];
-static mut TASK1_STACK: [isize; 256] = [0; 256];
+static mut STACK0: [isize; 256] = [0; 256];
+static mut STACK1: [isize; 256] = [0; 256];
 
-static mut task01: context::ContextControlBlock = context::ContextControlBlock{sp:0};
-static mut task02: context::ContextControlBlock = context::ContextControlBlock{sp:0};
+static mut TASK0: context::ContextControlBlock = context::ContextControlBlock{sp:0};
+static mut TASK1: context::ContextControlBlock = context::ContextControlBlock{sp:0};
 
 // main
 #[no_mangle]
@@ -37,31 +37,31 @@ pub unsafe extern "C" fn main() -> ! {
     wait(10000);
     println!("Hello! world!");
 
-    task01 = context::ContextControlBlock::new(&mut TASK0_STACK, Task0, 0);
-    task02 = context::ContextControlBlock::new(&mut TASK1_STACK, Task1, 1);
-    task01.start();
+    TASK0 = context::ContextControlBlock::new(&mut STACK0, task0, 0);
+    TASK1 = context::ContextControlBlock::new(&mut STACK1, task1, 1);
+    TASK0.start();
 
     loop {}
 }
 
-extern "C" fn Task0(_ext:isize)
+extern "C" fn task0(_ext:isize)
 {
     loop {
         wait(1000);
         println!("Task0");
         unsafe {
-            task01.switch(&mut task02);
+            TASK0.switch(&mut TASK1);
         }
     }
 }
 
-extern "C" fn Task1(_ext:isize)
+extern "C" fn task1(_ext:isize)
 {
     loop {
         wait(1000);
         println!("Task1");
         unsafe {
-            task02.switch(&mut task01);
+            TASK1.switch(&mut TASK0);
         }
     }
 }
