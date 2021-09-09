@@ -6,7 +6,6 @@ pub unsafe fn wfi() {
     asm!("wfi");
 }
 
-
 ///  分岐予測有効化
 pub unsafe fn enable_bpredict() {
     asm!(

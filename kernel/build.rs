@@ -2,10 +2,9 @@ use cc::Build;
 //use std::{env, error::Error, fs::File, io::Write, path::PathBuf};
 use std::{env, error::Error, path::PathBuf};
 
-fn main() -> Result<(), Box<dyn Error>>
-{
+fn main() -> Result<(), Box<dyn Error>> {
     let target = env::var("TARGET").unwrap();
-    
+
     /*
     {
         use std::fs::File;
@@ -20,10 +19,16 @@ fn main() -> Result<(), Box<dyn Error>>
     if target.contains("armv7r") {
         // ソースファイル
         let src_files = vec![
-            ["src/arm/asm/kernel_context_create.S", "kernel_context_create"],
-            ["src/arm/asm/kernel_context_switch.S", "kernel_context_switch"],
+            [
+                "src/arm/asm/kernel_context_create.S",
+                "kernel_context_create",
+            ],
+            [
+                "src/arm/asm/kernel_context_switch.S",
+                "kernel_context_switch",
+            ],
         ];
-        
+
         for name in src_files.into_iter() {
             Build::new()
                 .flag("-mfpu=vfpv3-d16")
