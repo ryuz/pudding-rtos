@@ -22,9 +22,9 @@ fn main()
         let t0 = que.pop_front();
         let t1 = que.pop_front();
         let t2 = que.pop_front();
-//        assert_eq!(t0.unwrap().priority, 0);
-//        assert_eq!(t1.unwrap().priority, 1);
-//        assert_eq!(t2.is_some(), false);
+        assert_eq!(t0.unwrap().get_priority(), 0);
+        assert_eq!(t1.unwrap().get_priority(), 1);
+        assert_eq!(t2.is_some(), false);
     }
     
 }
