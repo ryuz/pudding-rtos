@@ -41,6 +41,11 @@ impl<'a> TaskControlBlock<'a> {
         task.context.create(stack, task_entry, task_ptr as isize);
         task
     }
+
+    pub fn get_priority(&self) -> Priority
+    {
+        self.priority
+    }
 }
 
 
