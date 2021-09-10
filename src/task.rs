@@ -158,8 +158,8 @@ mod tests {
             let mut que: TaskQueue = TaskQueue::new();
             static mut STACK0: [isize; 256] = [0; 256];
             static mut STACK1: [isize; 256] = [0; 256];
-            let mut task0: TaskControlBlock = TaskControlBlock::new(&mut STACK0, task0, 0, 0);
-            let mut task1: TaskControlBlock = TaskControlBlock::new(&mut STACK1, task1, 1, 0);
+            let mut task0: TaskControlBlock = TaskControlBlock::new(0, task0,0, &mut STACK0);
+            let mut task1: TaskControlBlock = TaskControlBlock::new(0, task1,1, &mut STACK1);
             que.push_back(&mut task0);
             que.push_back(&mut task1);
             let t0 = que.pop_front();

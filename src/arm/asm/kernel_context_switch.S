@@ -12,8 +12,8 @@
 /************************************************
   実行コンテキストの切替
   void _kernel_context_switch(
-            ContexControlBlock *ctx_new,  r0 : 切り替え先コンテキスト
-            ContexControlBlock *ctx_now)  r1 : 現在のコンテキストの保存先
+            ContextControlBlock *ctx_next,    r0 : 切り替え先コンテキスト
+            ContextControlBlock *ctx_current) r1 : 現在のコンテキストの保存先
  ************************************************/
                 .global _kernel_context_switch
 _kernel_context_switch:
@@ -25,7 +25,7 @@ _kernel_context_switch:
 /************************************************
   実行コンテキストの開始
   void _kernel_context_start(
-            ContexControlBlock *ctx_new  r0 : 実行を開始するコンテキスト
+            ContextControlBlock *ctx_next    r0 : 実行を開始するコンテキスト
  ************************************************/
                 .global _kernel_context_start
 _kernel_context_start:

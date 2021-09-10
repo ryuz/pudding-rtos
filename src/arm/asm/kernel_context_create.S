@@ -16,7 +16,7 @@
             ContexControlBlock *ctxcb,             r0   :作成するコンテキスト
             void               *isp,               r1   :初期スタックポインタ
             void               (*entry)(intptr_t), r2   :実行アドレス
-            intptr_t           ext                 r3   :実行時パラメータ
+            intptr_t           exinf               r3   :実行時パラメータ
  ************************************************/
                 .global _kernel_context_create
                 .code   16
