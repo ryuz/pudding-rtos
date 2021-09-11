@@ -3,7 +3,7 @@ use core::ptr;
 use super::context::*;
 use super::*;
 
-type Priority = i32;
+type Priority = i8;
 
 pub struct Task {
     pub context: Context,
@@ -32,19 +32,7 @@ pub struct TaskQueue {
     tail: *mut Task,
 }
 
-/*
-fn dummy(_: isize) {}
 
-static mut SYSTEM_TASK: Task = Task {
-    context : Context { sp: 0 },
-    queue: ptr::null_mut(),
-    next: ptr::null_mut(),
-    priority: 127,
-    task: dummy,
-    exinf: 0,
-    marker: PhantomData,
-};
-*/
 
 static mut CURRENT_TASK: *mut Task = ptr::null_mut();
 static mut READY_QUEUE: TaskQueue = TaskQueue {
@@ -78,29 +66,6 @@ pub unsafe fn task_switch() {
 
 impl Task {
     /// タスク生成
-    /*
-    pub fn new(exinf: isize, task: fn(isize), priority: Priority, stack: &mut [isize]) -> Self {
-        let mut task = Task {
-            context: Context::new(),
-            queue: ptr::null_mut(),
-            next: ptr::null_mut(),
-            priority: priority,
-            task: task,
-            exinf: exinf,
-        };
-
-        let task_ptr = &mut task as *mut Task;
-        unsafe {
-            cpu_lock();
-        }
-        task.context.create(stack, task_entry, task_ptr as isize);
-        unsafe {
-            cpu_unlock();
-        }
-        task
-    }*/
-
-    /// タスク生成
     pub fn create(
         &mut self,
         exinf: isize,
@@ -124,6 +89,7 @@ impl Task {
         self.context.create(stack, task_entry, task_ptr as isize);
     }
 
+    /*
     fn is_current(&self) -> bool {
         self.context.is_current()
     }
@@ -141,6 +107,7 @@ impl Task {
     fn set_next(&mut self, task: &mut Task ) {
         self.next = task as *mut Task;
     }
+    */
 
     /// タスクスイッチ
     unsafe fn switch(&mut self) {
@@ -165,7 +132,7 @@ impl Task {
 
     fn remove_queue(&mut self){
         if self.queue != ptr::null_mut() {
-            let mut que = unsafe{&mut *self.queue};
+            let que = unsafe{&mut *self.queue};
             que.remove(self);
         }
     }
@@ -304,7 +271,6 @@ impl TaskQueue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use once_cell::sync::Lazy;
 
     #[test]
     fn test_task_queue() {
@@ -316,21 +282,43 @@ mod tests {
             static mut TASK1: Task = task_default!();
             TASK0.create(0, task0, 0, &mut STACK0);
             TASK1.create(1, task1, 1, &mut STACK1);
-            /*
-            static mut TASK0: Lazy<Task> =
-                Lazy::new(|| Task::new(0, task0, 0, unsafe { &mut STACK0 }));
-            static mut TASK1: Lazy<Task> =
-                Lazy::new(|| Task::new(0, task1, 1, unsafe { &mut STACK1 }));
-            */
+            
+            {
+                QUE.push_back(&mut TASK0);
+                QUE.push_back(&mut TASK1);
+                let t0 = QUE.pop_front();
+                let t1 = QUE.pop_front();
+                let t2 = QUE.pop_front();
+                assert_eq!(t0.unwrap().priority, 0);
+                assert_eq!(t1.unwrap().priority, 1);
+                assert_eq!(t2.is_some(), false);
+            }
+            
+            {
+                QUE.push_back(&mut TASK0);
+                QUE.push_back(&mut TASK1);
+                assert_eq!(QUE.tail, &mut TASK1 as *mut Task);
+                TASK0.remove_queue();
+                assert_eq!(QUE.tail, &mut TASK1 as *mut Task);
+                TASK1.remove_queue();
+                assert_eq!(QUE.tail, ptr::null_mut());
 
-            QUE.push_back(&mut TASK0);
-            QUE.push_back(&mut TASK1);
-            let t0 = QUE.pop_front();
-            let t1 = QUE.pop_front();
-            let t2 = QUE.pop_front();
-            assert_eq!(t0.unwrap().priority, 0);
-            assert_eq!(t1.unwrap().priority, 1);
-            assert_eq!(t2.is_some(), false);
+                let t0 = QUE.pop_front();
+                assert_eq!(t0.is_some(), false);
+            }
+
+            {
+                QUE.push_back(&mut TASK0);
+                QUE.push_back(&mut TASK1);
+                assert_eq!(QUE.tail, &mut TASK1 as *mut Task);
+                TASK1.remove_queue();
+                assert_eq!(QUE.tail, &mut TASK0 as *mut Task);
+                TASK0.remove_queue();
+                assert_eq!(QUE.tail, ptr::null_mut());
+
+                let t0 = QUE.pop_front();
+                assert_eq!(t0.is_some(), false);
+            }
         }
     }
 
