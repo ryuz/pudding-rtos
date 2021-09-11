@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 #![cfg(target_arch = "arm")]
 
-
 pub unsafe fn mpu_get_number_of_data_regions() -> u32 {
     let mut v: u32;
     asm!(

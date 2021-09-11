@@ -60,15 +60,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "kernel_context_switch",
             ],
         ];
-        
+
         for name in src_files.into_iter() {
             Build::new()
                 .flag("-fPIE")
-//              .flag("-mfpu=vfpv3-d16")
-//                .flag("-mthumb-interwork")
-//                .flag("-mfloat-abi=softfp")
-//                .flag("-Wno-unused-parameter")
-//                .flag("-Wno-missing-field-initializers")
+                //              .flag("-mfpu=vfpv3-d16")
+                //                .flag("-mthumb-interwork")
+                //                .flag("-mfloat-abi=softfp")
+                //                .flag("-Wno-unused-parameter")
+                //                .flag("-Wno-missing-field-initializers")
                 //          .flag(&format!("-I{}/include", kernel_path))
                 .file(name[0])
                 .compile(name[1]);

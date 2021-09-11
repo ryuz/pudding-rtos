@@ -1,15 +1,13 @@
 #![allow(dead_code)]
 #![cfg(target_arch = "arm")]
 
-
 #[repr(C)]
 #[derive(Default)]
 pub struct CpuControlBlock {
-    pub imask: u32
+    pub imask: u32,
 }
 
-static mut CPU_CB: CpuControlBlock = CpuControlBlock {imask: 0};
-
+static mut CPU_CB: CpuControlBlock = CpuControlBlock { imask: 0 };
 
 pub unsafe fn cpu_lock() {
     asm!(
