@@ -52,7 +52,7 @@ static mut READY_QUEUE: TaskQueue = TaskQueue {
 };
 
 /*
-fn current_task() -> &'static mut Task {
+fn current_task() -> & mut Task {
     unsafe { &mut *CURRENT_TASK }
 }
 
@@ -100,6 +100,7 @@ impl Task {
         task
     }*/
 
+    /// タスク生成
     pub fn create(
         &mut self,
         exinf: isize,
@@ -111,6 +112,8 @@ impl Task {
             let task_ptr = exinf as *mut Task;
             let task = unsafe { &mut *task_ptr };
             (task.task.unwrap())(task.exinf);
+            task.remove_queue();
+            unsafe { task_switch() };
         }
 
         self.exinf = exinf;
@@ -121,8 +124,22 @@ impl Task {
         self.context.create(stack, task_entry, task_ptr as isize);
     }
 
-    pub fn is_current(&self) -> bool {
+    fn is_current(&self) -> bool {
         self.context.is_current()
+    }
+
+    fn is_eq(&self, task: &Task) -> bool {
+        let ptr0 = self as *const Task;
+        let ptr1 = task as *const Task;
+        ptr0 == ptr1
+    }
+
+    fn get_next(&mut self) -> &mut Task {
+        unsafe { &mut *self.next }
+    }
+
+    fn set_next(&mut self, task: &mut Task ) {
+        self.next = task as *mut Task;
     }
 
     /// タスクスイッチ
@@ -137,7 +154,7 @@ impl Task {
         self.priority
     }
 
-    pub fn activate(&'static mut self) {
+    pub fn activate(&mut self) {
         unsafe {
             cpu_lock();
             READY_QUEUE.insert_priority_order(self);
@@ -146,11 +163,14 @@ impl Task {
         }
     }
 
-
-//    let task_tail = unsafe { &mut *self.tail };
-
-
+    fn remove_queue(&mut self){
+        if self.queue != ptr::null_mut() {
+            let mut que = unsafe{&mut *self.queue};
+            que.remove(self);
+        }
+    }
 }
+
 
 impl TaskQueue {
     pub fn new() -> Self {
@@ -160,7 +180,7 @@ impl TaskQueue {
     }
 
     /// 優先度順で追加
-    pub fn insert_priority_order(&mut self, task: &'static mut Task) {
+    pub fn insert_priority_order(&mut self, task: &mut Task) {
         // タスクに所属キューを設定
         task.queue = self as *mut TaskQueue;
 
@@ -209,7 +229,7 @@ impl TaskQueue {
     }
 
     /// FIFO順で追加
-    pub fn push_back(&mut self, task: &'static mut Task) {
+    pub fn push_back(&mut self, task: &mut Task) {
         // 生ポインタ化
         let task_ptr = task as *mut Task;
 
@@ -230,7 +250,7 @@ impl TaskQueue {
     }
 
     /// 先頭を参照
-    pub fn front(&mut self) -> Option<&'static mut Task> {
+    pub fn front(&mut self) -> Option<&mut Task> {
         if self.tail == ptr::null_mut() {
             None
         } else {
@@ -240,7 +260,7 @@ impl TaskQueue {
     }
 
     /// 先頭を取り出し
-    pub fn pop_front(&mut self) -> Option<&'static mut Task> {
+    pub fn pop_front(&mut self) -> Option<&mut Task> {
         if self.tail == ptr::null_mut() {
             None
         } else {
@@ -254,7 +274,32 @@ impl TaskQueue {
             Some(task_head)
         }
     }
+
+    pub fn remove(&mut self, task: &mut Task) {
+        // 生ポインタ化
+        let task_ptr = task as *mut Task;
+
+        if task.next == task_ptr {	/* last one */
+            self.tail = ptr::null_mut();
+        }
+        else {
+            let mut prev_ptr = self.tail;
+            let mut prev_task = unsafe { &mut *prev_ptr };
+            while prev_task.next != task_ptr {
+                prev_ptr = prev_task.next;
+                prev_task = unsafe { &mut *prev_ptr };
+            }
+            prev_task.next = task.next;
+            if self.tail == task_ptr {
+                self.tail = prev_ptr;
+            }
+        }
+        // 取り外し
+        task.queue = ptr::null_mut();
+        task.next = ptr::null_mut();
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -264,18 +309,25 @@ mod tests {
     #[test]
     fn test_task_queue() {
         unsafe {
-            let mut que: TaskQueue = TaskQueue::new();
+            static mut QUE: TaskQueue = TaskQueue { tail: ptr::null_mut() };
             static mut STACK0: [isize; 256] = [0; 256];
             static mut STACK1: [isize; 256] = [0; 256];
+            static mut TASK0: Task = task_default!();
+            static mut TASK1: Task = task_default!();
+            TASK0.create(0, task0, 0, &mut STACK0);
+            TASK1.create(1, task1, 1, &mut STACK1);
+            /*
             static mut TASK0: Lazy<Task> =
                 Lazy::new(|| Task::new(0, task0, 0, unsafe { &mut STACK0 }));
             static mut TASK1: Lazy<Task> =
                 Lazy::new(|| Task::new(0, task1, 1, unsafe { &mut STACK1 }));
-            que.push_back(&mut TASK0);
-            que.push_back(&mut TASK1);
-            let t0 = que.pop_front();
-            let t1 = que.pop_front();
-            let t2 = que.pop_front();
+            */
+
+            QUE.push_back(&mut TASK0);
+            QUE.push_back(&mut TASK1);
+            let t0 = QUE.pop_front();
+            let t1 = QUE.pop_front();
+            let t2 = QUE.pop_front();
             assert_eq!(t0.unwrap().priority, 0);
             assert_eq!(t1.unwrap().priority, 1);
             assert_eq!(t2.is_some(), false);

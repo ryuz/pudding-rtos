@@ -16,8 +16,6 @@ pub use x86_64::*;
 pub mod context;
 pub mod task;
 
-
 pub fn initialize() {
     context::context_initialize();
 }
-
