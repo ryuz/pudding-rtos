@@ -1,21 +1,22 @@
 #![no_std]
 #![feature(asm)]
 
-#[cfg(target_arch = "arm")]
-pub mod arm;
-#[cfg(target_arch = "arm")]
-pub use arm::*;
 
-#[cfg(target_arch = "x86_64")]
-pub mod x86_64;
-#[cfg(target_arch = "x86_64")]
-pub use x86_64::*;
+pub mod system;
+pub mod register;
 
-//pub mod dummy;
-
+#[macro_use]
 pub mod context;
+
+#[macro_use]
 pub mod task;
+
+pub mod cpu;
+pub mod inh;
+pub mod irc;
+
 
 pub fn initialize() {
     context::context_initialize();
 }
+

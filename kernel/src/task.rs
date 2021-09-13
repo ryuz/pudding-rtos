@@ -1,10 +1,13 @@
+
+use crate::cpu::*;
+use crate::context::*;
 use core::ptr;
 
-use super::context::*;
-use super::*;
 
-type Priority = i8;
+pub type Priority = i8;
 
+// Task control block
+// static初期化の為に泣く泣くすべてpubにする
 pub struct Task {
     pub context: Context,
     pub queue: *mut TaskQueue,
@@ -14,6 +17,7 @@ pub struct Task {
     pub exinf: isize,
 }
 
+// static初期化時に中身知らなくてよいようにマクロで補助
 #[macro_export]
 macro_rules! task_default {
     () => {
@@ -28,11 +32,10 @@ macro_rules! task_default {
     };
 }
 
+// タスクキュー
 pub struct TaskQueue {
     tail: *mut Task,
 }
-
-
 
 static mut CURRENT_TASK: *mut Task = ptr::null_mut();
 static mut READY_QUEUE: TaskQueue = TaskQueue {
@@ -51,12 +54,12 @@ fn task_eq(task0: &Task, task1: &Task) -> bool {
 }
 */
 
-pub unsafe fn task_switch() {
+pub (in crate) unsafe fn task_switch() {
     let head = READY_QUEUE.front();
     match head {
         None => {
             CURRENT_TASK = ptr::null_mut();
-            context_switch_system();
+            context_switch_to_system();
         }
         Some(task) => {
             task.switch();
@@ -130,14 +133,13 @@ impl Task {
         }
     }
 
-    fn remove_queue(&mut self){
+    fn remove_queue(&mut self) {
         if self.queue != ptr::null_mut() {
-            let que = unsafe{&mut *self.queue};
+            let que = unsafe { &mut *self.queue };
             que.remove(self);
         }
     }
 }
-
 
 impl TaskQueue {
     pub fn new() -> Self {
@@ -242,14 +244,18 @@ impl TaskQueue {
         }
     }
 
+    // 接続位置で時間が変わるので注意
+    // 先頭しか外さない or タスク数を制約するなどで時間保証可能
+    // 双方向リストする手はあるので、大量タスクを扱うケースが出たら考える
     pub fn remove(&mut self, task: &mut Task) {
         // 生ポインタ化
         let task_ptr = task as *mut Task;
 
-        if task.next == task_ptr {	/* last one */
+        // 接続位置を探索
+        if task.next == task_ptr {
+            /* last one */
             self.tail = ptr::null_mut();
-        }
-        else {
+        } else {
             let mut prev_ptr = self.tail;
             let mut prev_task = unsafe { &mut *prev_ptr };
             while prev_task.next != task_ptr {
@@ -267,7 +273,6 @@ impl TaskQueue {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -275,26 +280,36 @@ mod tests {
     #[test]
     fn test_task_queue() {
         unsafe {
-            static mut QUE: TaskQueue = TaskQueue { tail: ptr::null_mut() };
+            static mut QUE: TaskQueue = TaskQueue {
+                tail: ptr::null_mut(),
+            };
             static mut STACK0: [isize; 256] = [0; 256];
             static mut STACK1: [isize; 256] = [0; 256];
+            static mut STACK2: [isize; 256] = [0; 256];
             static mut TASK0: Task = task_default!();
             static mut TASK1: Task = task_default!();
+            static mut TASK2: Task = task_default!();
             TASK0.create(0, task0, 0, &mut STACK0);
             TASK1.create(1, task1, 1, &mut STACK1);
-            
+            TASK2.create(2, task2, 2, &mut STACK2);
+
             {
+                // 単純追加＆取り出し
                 QUE.push_back(&mut TASK0);
                 QUE.push_back(&mut TASK1);
+                QUE.push_back(&mut TASK2);
                 let t0 = QUE.pop_front();
                 let t1 = QUE.pop_front();
                 let t2 = QUE.pop_front();
+                let t3 = QUE.pop_front();
                 assert_eq!(t0.unwrap().priority, 0);
                 assert_eq!(t1.unwrap().priority, 1);
-                assert_eq!(t2.is_some(), false);
+                assert_eq!(t2.unwrap().priority, 2);
+                assert_eq!(t3.is_some(), false);
             }
-            
+
             {
+                // 削除パターン1
                 QUE.push_back(&mut TASK0);
                 QUE.push_back(&mut TASK1);
                 assert_eq!(QUE.tail, &mut TASK1 as *mut Task);
@@ -308,6 +323,7 @@ mod tests {
             }
 
             {
+                // 削除パターン2
                 QUE.push_back(&mut TASK0);
                 QUE.push_back(&mut TASK1);
                 assert_eq!(QUE.tail, &mut TASK1 as *mut Task);
@@ -319,9 +335,84 @@ mod tests {
                 let t0 = QUE.pop_front();
                 assert_eq!(t0.is_some(), false);
             }
+
+            {
+                // 優先度順パターン1
+                QUE.insert_priority_order(&mut TASK0);
+                assert_eq!(QUE.front().unwrap().get_priority(), 0);
+                QUE.insert_priority_order(&mut TASK1);
+                assert_eq!(QUE.front().unwrap().get_priority(), 0);
+                QUE.insert_priority_order(&mut TASK2);
+                assert_eq!(QUE.front().unwrap().get_priority(), 0);
+
+                let t0 = QUE.pop_front();
+                let t1 = QUE.pop_front();
+                let t2 = QUE.pop_front();
+                let t3 = QUE.pop_front();
+                assert_eq!(t0.unwrap().priority, 0);
+                assert_eq!(t1.unwrap().priority, 1);
+                assert_eq!(t2.unwrap().priority, 2);
+                assert_eq!(t3.is_some(), false);
+            }
+
+            {
+                // 優先度順パターン2
+                QUE.insert_priority_order(&mut TASK2);
+                assert_eq!(QUE.front().unwrap().get_priority(), 2);
+                QUE.insert_priority_order(&mut TASK1);
+                assert_eq!(QUE.front().unwrap().get_priority(), 1);
+                QUE.insert_priority_order(&mut TASK0);
+                assert_eq!(QUE.front().unwrap().get_priority(), 0);
+
+                let t0 = QUE.pop_front();
+                let t1 = QUE.pop_front();
+                let t2 = QUE.pop_front();
+                let t3 = QUE.pop_front();
+                assert_eq!(t0.unwrap().priority, 0);
+                assert_eq!(t1.unwrap().priority, 1);
+                assert_eq!(t2.unwrap().priority, 2);
+                assert_eq!(t3.is_some(), false);
+            }
+            {
+                // 優先度順パターン3
+                QUE.insert_priority_order(&mut TASK1);
+                assert_eq!(QUE.front().unwrap().get_priority(), 1);
+                QUE.insert_priority_order(&mut TASK2);
+                assert_eq!(QUE.front().unwrap().get_priority(), 1);
+                QUE.insert_priority_order(&mut TASK0);
+                assert_eq!(QUE.front().unwrap().get_priority(), 0);
+
+                let t0 = QUE.pop_front();
+                let t1 = QUE.pop_front();
+                let t2 = QUE.pop_front();
+                let t3 = QUE.pop_front();
+                assert_eq!(t0.unwrap().priority, 0);
+                assert_eq!(t1.unwrap().priority, 1);
+                assert_eq!(t2.unwrap().priority, 2);
+                assert_eq!(t3.is_some(), false);
+            }
+            {
+                // 優先度順パターン4
+                QUE.insert_priority_order(&mut TASK2);
+                assert_eq!(QUE.front().unwrap().get_priority(), 2);
+                QUE.insert_priority_order(&mut TASK0);
+                assert_eq!(QUE.front().unwrap().get_priority(), 0);
+                QUE.insert_priority_order(&mut TASK1);
+                assert_eq!(QUE.front().unwrap().get_priority(), 0);
+
+                let t0 = QUE.pop_front();
+                let t1 = QUE.pop_front();
+                let t2 = QUE.pop_front();
+                let t3 = QUE.pop_front();
+                assert_eq!(t0.unwrap().priority, 0);
+                assert_eq!(t1.unwrap().priority, 1);
+                assert_eq!(t2.unwrap().priority, 2);
+                assert_eq!(t3.is_some(), false);
+            }
         }
     }
 
-    fn task0(_ext: isize) {}
-    fn task1(_ext: isize) {}
+    fn task0(_exinf: isize) {}
+    fn task1(_exinf: isize) {}
+    fn task2(_exinf: isize) {}
 }

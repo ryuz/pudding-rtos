@@ -2,7 +2,6 @@ use core::mem::size_of;
 use core::ptr;
 
 #[repr(C)]
-//#[derive(Default)]
 pub struct Context {
     pub sp: usize,
 }
@@ -32,9 +31,8 @@ extern "C" {
 
 static mut SYSTEM_CONTEXT: Context = Context { sp: 0 };
 static mut CURRENT_CONTEXT: *mut Context = ptr::null_mut();
-//    Lazy::new(|| unsafe { &mut *SYSTEM_CONTEXT as *mut Context });
 
-pub unsafe fn context_switch_system() {
+pub unsafe fn context_switch_to_system() {
     SYSTEM_CONTEXT.switch();
 }
 

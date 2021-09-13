@@ -40,6 +40,7 @@ pub unsafe extern "C" fn main() -> ! {
     println!("Start");
     {
         kernel::initialize();
+        wait(100);
 
         static mut STACK0: [isize; 256] = [0; 256];
         static mut STACK1: [isize; 256] = [0; 256];
