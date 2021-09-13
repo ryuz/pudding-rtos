@@ -18,5 +18,7 @@
 #define CPUCB_INTCNT	1
 #define CPUCB_ISP		4
 
+#define INTNO_IRQ		0
+#define INTNO_FIQ		1
 
 /* end of file */

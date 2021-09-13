@@ -7,6 +7,7 @@ mod bootstrap;
 #[macro_use]
 mod uart;
 use uart::*;
+mod timer;
 
 use core::panic::PanicInfo;
 
@@ -31,17 +32,25 @@ use kernel::context::*;
 use kernel::task::*;
 
 
+static mut STACK_INT: [isize; 512] = [0; 512];
+
+
 // main
 #[no_mangle]
 pub unsafe extern "C" fn main() -> ! {
     wait(10000);
-    println!("Hello! world!");
+    println!("Hello world");
     
     println!("Start");
     {
         kernel::initialize();
-        wait(100);
+        kernel::cpu::interrupt_initialize(&mut STACK_INT);
+        kernel::irc::pl390::pl390_initialize(0xf9001000, 0xf9000000);
+        timer::timer_initialize();
+        
 
+        wait(100);
+        
         static mut STACK0: [isize; 256] = [0; 256];
         static mut STACK1: [isize; 256] = [0; 256];
         static mut TASK0: Task = task_default!();
@@ -51,10 +60,17 @@ pub unsafe extern "C" fn main() -> ! {
         TASK1.create(1, task1, 1, &mut STACK1);
         TASK0.activate();
         TASK1.activate();
+
+        kernel::cpu::cpu_unlock();
     }
     println!("End");
 
-    loop {}
+    let mut i:i32 = 0;
+    loop {
+        println!("loop:{}", i);
+        i += 1;
+        wait(10000000);
+    }
 }
 
 

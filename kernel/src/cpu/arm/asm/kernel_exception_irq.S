@@ -9,10 +9,10 @@
                 .text
                 .align  2
 
-                .global _kernel_cpucb
+                .global _KERNEL_CPU_CB
                 .global _kernel_interrupt_start
                 .global _kernel_interrupt_end
-                .global _kernel_interrupt_exec
+                .global _kernel_interrupt_handler
 
 
 /************************************************
@@ -39,7 +39,7 @@ _kernel_exception_irq:
                 stmfd   sp!, {r0, r1}                           /* lr_irq, spsr_irq退避 */
                 
             /* ---- 割込みマスク設定 */
-                ldr     r0, =_kernel_ictxcb
+                ldr     r0, =_KERNEL_CPU_CB
                 ldr     r3, [r0, #CPUCB_IMSK]                   /* 古いimsk値を取り出し */
                 orr     r1, r3, #I_Bit                          /* 割込みマスク */
                 strb    r1, [r0, #CPUCB_IMSK]                   /* cpsr値をimsk値に設定 */
@@ -60,13 +60,13 @@ _kernel_exception_irq:
                 bl      _kernel_interrupt_start                 /* 割り込み開始 */
                 
             /* ---- 割込みハンドラ実行 */
-                mov     r0, #INHNO_IRQ
-                bl      _kernel_interrupt_exec
+                mov     r0, #INTNO_IRQ
+                bl      _kernel_interrupt_handler
                 
             /* ---- 割込み処理の終了設定 */
                 ldmfd   sp!, {r1, r3}                           /* 汎用レジスタ復帰 */
                 mov     sp, r1                                  /* SPを元のコンテキストのものに戻す */
-                ldr     r0, =_kernel_ictxcb                     /* 割り込みネストカウンタのアドレス取得 */
+                ldr     r0, =_KERNEL_CPU_CB                     /* 割り込みネストカウンタのアドレス取得 */
                 mov     r1, #0                                  /* 割り込みネストカウンタを0に戻す */
                 strb    r1, [r0, #CPUCB_INTCNT]                 /* 割り込みネストカウンタ値設定 */
             
@@ -77,7 +77,7 @@ _kernel_exception_irq:
                 bl      _kernel_interrupt_end                   /* 割り込み終了処理 */
                 
             /* ---- 復帰先割込みマスク設定 */
-                ldr     r0, =_kernel_ictxcb
+                ldr     r0, =_KERNEL_CPU_CB
                 ldr     r1, [sp, #4]                            /* spsr_irq 値取り出し */
                 tst     r1, #I_Bit                              /* 割禁と同時にIRQが入る場合があるのでケア */
                 ldreqb  r0, [r0, #CPUCB_IMSK]                   /* この時点でのimsk値取り出し */
@@ -114,8 +114,8 @@ multiple_int:
                 stmfd   sp!, {r0, r1}                           /* タスクのSPを割り込み用スタックに保存(8の倍数になるようにr1も) */
                 
             /* ---- 割り込みハンドラ実行 */
-                mov     r0, #INHNO_IRQ
-                bl      _kernel_interrupt_exec
+                mov     r0, #INTNO_IRQ
+                bl      _kernel_interrupt_handler
 
             /* ---- スタックアライメント復帰 */
                 ldmfd   sp!, {r0, r1}                           /* 汎用レジスタ復帰 */

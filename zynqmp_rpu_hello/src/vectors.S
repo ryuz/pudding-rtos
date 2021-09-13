@@ -11,7 +11,7 @@
                 .global _swi_handler
                 .global _pre_handler
                 .global _abt_handler
-                .global _irq_handler
+                .global _kernel_exception_irq
                 .global _fiq_handler
 
                 .text
@@ -38,7 +38,7 @@ adr_pre_hdr:
 adr_abt_hdr:
                 .long   _abt_handler
 adr_irq_hdr:
-                .long   _irq_handler
+                .long   _kernel_exception_irq
 adr_fiq_hdr:
                 .long   _fiq_handler
 
