@@ -27,6 +27,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "src/cpu/arm/asm/kernel_context_switch.S",
                 "kernel_context_switch",
             ],
+            [
+                "src/cpu/arm/asm/kernel_exception_irq.S",
+                "kernel_exception_irq",
+            ],
         ];
 
         for name in src_files.into_iter() {

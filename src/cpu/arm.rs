@@ -11,7 +11,8 @@ pub struct CpuControlBlock {
     pub isp: u32,   // 割り込みスタック初期値
 }
 
-static mut CPU_CB: CpuControlBlock = CpuControlBlock {
+#[no_mangle]
+static mut _KERNEL_CPU_CB: CpuControlBlock = CpuControlBlock {
     imask: 0,
     inest: 0,
     isp: 0,
@@ -24,7 +25,7 @@ pub unsafe fn cpu_initialize() {
 
 pub unsafe fn interrupt_initialize(stack: &mut [isize]) {
     let isp = (&stack[0] as *const isize as usize) + stack.len() * core::mem::size_of::<isize>();
-    CPU_CB.isp = isp as u32;
+    _KERNEL_CPU_CB.isp = isp as u32;
 }
 
 
@@ -40,7 +41,7 @@ pub unsafe fn cpu_lock() {
 }
 
 pub unsafe fn cpu_unlock() {
-    let imask = CPU_CB.imask;
+    let imask = _KERNEL_CPU_CB.imask;
     asm!(
         r#"
             mrs     r0, cpsr                    /* cpsr取得 */
