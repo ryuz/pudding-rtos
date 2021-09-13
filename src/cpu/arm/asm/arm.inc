@@ -13,5 +13,10 @@
 #define F_Bit           0x40        /* F ビット */
 #define I_Bit           0x80        /* I ビット */
 
+/* CpuControlBlock構造体オフセット */
+#define CPUCB_IMSK		0
+#define CPUCB_INTCNT	1
+#define CPUCB_ISP		4
+
 
 /* end of file */

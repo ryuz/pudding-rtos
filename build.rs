@@ -1,6 +1,6 @@
 use cc::Build;
 //use std::{env, error::Error, fs::File, io::Write, path::PathBuf};
-use std::{env, error::Error, path::PathBuf};
+use std::{env, error::Error}; // , path::PathBuf};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let target = env::var("TARGET").unwrap();
@@ -20,11 +20,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         // ソースファイル
         let src_files = vec![
             [
-                "src/arm/asm/kernel_context_create.S",
+                "src/cpu/arm/asm/kernel_context_create.S",
                 "kernel_context_create",
             ],
             [
-                "src/arm/asm/kernel_context_switch.S",
+                "src/cpu/arm/asm/kernel_context_switch.S",
                 "kernel_context_switch",
             ],
         ];
@@ -34,29 +34,23 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .flag("-mfpu=vfpv3-d16")
                 .flag("-mthumb-interwork")
                 .flag("-mfloat-abi=softfp")
+                .flag("-D_KERNEL_ARM_WITH_VFP")
                 .flag("-Wno-unused-parameter")
                 .flag("-Wno-missing-field-initializers")
                 .file(name[0])
                 .compile(name[1]);
         }
-
-        // ライブラリパス追加
-        let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
-        println!("cargo:rustc-link-search={}", out_dir.display());
-
-        // リンカスクリプトををビルドディレクトリに
-        //  File::create(out_dir.join("link.lds"))?.write_all(include_bytes!("link.lds"))?;
     }
 
     if target.contains("x86_64") {
         // ソースファイル
         let src_files = vec![
             [
-                "src/x86_64/asm/kernel_context_create.S",
+                "src/cpu/x86_64/asm/kernel_context_create.S",
                 "kernel_context_create",
             ],
             [
-                "src/x86_64/asm/kernel_context_switch.S",
+                "src/cpu/x86_64/asm/kernel_context_switch.S",
                 "kernel_context_switch",
             ],
         ];
@@ -75,8 +69,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         // ライブラリパス追加
-        let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
-        println!("cargo:rustc-link-search={}", out_dir.display());
+//        let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
+//        println!("cargo:rustc-link-search={}", out_dir.display());
 
         // リンカスクリプトををビルドディレクトリに
         //  File::create(out_dir.join("link.lds"))?.write_all(include_bytes!("link.lds"))?;

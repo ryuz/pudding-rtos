@@ -1,41 +1,7 @@
 #![allow(dead_code)]
 #![cfg(target_arch = "arm")]
 
-#[repr(C)]
-#[derive(Default)]
-pub struct CpuControlBlock {
-    pub imask: u32,
-}
 
-static mut CPU_CB: CpuControlBlock = CpuControlBlock { imask: 0 };
-
-pub unsafe fn cpu_lock() {
-    asm!(
-        r#"
-            mrs     r0, cpsr                    /* cpsr取得 */
-            orr     r0, r0, #(0x40 | 0x80)      /* FビットとIビットを設定 */
-            msr     cpsr_c, r0                  /* cpsr設定 */
-        "#
-    );
-}
-
-pub unsafe fn cpu_unlock() {
-    let imask = CPU_CB.imask;
-    asm!(
-        r#"
-            mrs     r0, cpsr                    /* cpsr取得 */
-            bic     r0, r0, #(0x40 | 0x80)      /* FビットとIビットをクリア */
-            orr     r0, r0, {0}                 /* 割込みマスク設定 */
-            msr     cpsr_c, r0                  /* cpsr設定 */
-        "#,
-        in(reg) imask,
-    );
-}
-
-/// 割り込み待ち
-pub unsafe fn wfi() {
-    asm!("wfi");
-}
 
 ///  分岐予測有効化
 pub unsafe fn enable_bpredict() {
@@ -171,6 +137,19 @@ pub unsafe fn disable_ecc() {
             bic     r0, r0, #(0x1 << 4)
             bic     r0, r0, #(0x1 << 3)
             mcr     p15, 0, r1, c1, c0, 1   /* Write Auxiliary Control Register */
+        "#
+    );
+}
+
+pub unsafe fn enable_vfp() {
+    asm!(
+        r#"
+                mrc     p15, 0, r0, c1, c0, 2   /* CP アクセスレジスタを読み込む */
+                orr     r0, r0, #0x00f00000     /* NEON/VFP（コプロセッサ 10 および 11）へのフルアクセス権を有効にする */
+                mcr     p15, 0, r0, c1, c0, 2   /* CP アクセスレジスタを書き込む */
+                isb
+                mov     r0, #0x40000000         /* VFP および NEON ハードウェアをオンにする */
+                vmsr    fpexc, r0               /* FPEXC の EN ビットを設定する */
         "#
     );
 }

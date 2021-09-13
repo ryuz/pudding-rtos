@@ -1,6 +1,10 @@
 #![allow(dead_code)]
 
-use super::super::register::*;
+
+use crate::register::*;
+
+pub type IntNo = i32;
+
 
 // メモリマップドレジスタ定義
 const ICCICR: usize = 0x000; // CPU インタフェース制御レジスタ
@@ -26,8 +30,6 @@ const ICDIPR: usize = 0x400; // 割り込み優先度レジスタ
 const ICDIPTR: usize = 0x800; // 割り込みプロセッサターゲットレジスタ
 const ICDICFR: usize = 0xc00; // 割り込み構成レジスタ
 const ICDSGIR: usize = 0xf00; // ソフトウェア生成割り込みレジスタ
-
-type IntNo = i32;
 
 static mut ICC_ADDRESS: usize = 0;
 static mut ICD_ADDRESS: usize = 0;
@@ -180,37 +182,37 @@ pub fn pl390_initialize(icc_address: usize, idc_address: usize) {
 }
 
 // 割込みの禁止
-pub fn disable_interrupt(intno: IntNo) {
+pub fn interrupt_disable(intno: IntNo) {
     unsafe {
         write_icdicer(intno as usize >> 5, 1 << (intno & 0x1f));
     }
 }
 
 // 割込みの許可
-pub fn enable_interrupt(intno: IntNo) {
+pub fn interrupt_enable(intno: IntNo) {
     unsafe {
         write_icdiser(intno as usize >> 5, 1 << (intno & 0x1f));
     }
 }
 
-use super::super::*;
-use crate::task::*;
 
-struct IsrInfo {
-    handler: fn(isize),
-    exinf: isize,
+// 割り込みハンドラ
+static mut INTERRUPT_HANDLERS: [Option<fn()>; 255] = [None; 255];
+
+pub unsafe fn interrupt_set_handler(intno: IntNo, handler: Option<fn()>) {
+    INTERRUPT_HANDLERS[intno as usize] = handler;
 }
 
-static mut ISR_TABLE: [Option<fn(isize)>; 256] = [None; 256];
+
 
 // 割込みコントローラの割込み処理
-pub (in crate) unsafe fn irc_execute(inhno: InhNo) {
+pub (in crate) unsafe fn interrupt_handler(_inhno: isize) {
     // 割込み番号取得
     let icciar = read_icciar();
     let intno = icciar as usize;
-    if intno >= ISR_TABLE.len() {
-        panic!("unexpected ICCIAR");
-    }
+//    if intno >= INTERRUPT_HANDLERS.len() {
+//        panic!("unexpected ICCIAR");
+//    }
 
     // 優先度マスク更新
     let pmr = read_iccpmr();
@@ -223,6 +225,7 @@ pub (in crate) unsafe fn irc_execute(inhno: InhNo) {
     // 割込みサービスルーチン呼び出し
     //    _kernel_ictxcb.imsk &= ~_KERNEL_IMSK_I;	// 多重割り込み許可
     //    _kernel_exe_isr((INTNO)intno);
+    INTERRUPT_HANDLERS[intno].unwrap()();
     //    _kernel_ictxcb.imsk |= _KERNEL_IMSK_I;
 
     // 優先度マスク復帰
