@@ -12,7 +12,6 @@ pub mod context;
 pub mod task;
 
 pub mod cpu;
-pub mod inh;
 pub mod irc;
 
 
