@@ -147,31 +147,46 @@ unsafe fn write_icdiptr(n: usize, data: u8) {
 unsafe fn write_icdicfr(n: usize, data: u32) {
     reg32_write(ICD_ADDRESS + ICDICFR + 4 * n, data);
 }
+unsafe fn read_icdicfr(n: usize) -> u32 {
+    reg32_read(ICD_ADDRESS + ICDICFR + 4 * n)
+}
 
 // ソフトウェア生成割り込みレジスタ
 unsafe fn write_icdsgir(data: u32) {
     reg32_write(ICD_ADDRESS + ICDSGIR, data);
 }
 
-/*
-unsafe fn write_icc(reg: usize, data: u32) {
-    reg32_write(ICC_ADDRESS + reg, data);
+
+
+
+pub unsafe fn icd_enable() {
+    write_icddcr(1);
 }
 
-unsafe fn read_icc(reg: usize) -> u32 {
-    reg32_read(ICC_ADDRESS + reg)
+pub unsafe fn icd_disable() {
+    write_icddcr(0);
 }
 
-unsafe fn write_icd(reg: usize, data: u32) {
-    reg32_write(ICD_ADDRESS + reg, data);
+/// ICDIPTR(target CPU)
+pub unsafe fn icd_set_target(intno: IntNo, targetcpu: u8)
+{
+	write_icdiptr(intno as usize, targetcpu);
 }
 
-unsafe fn read_icd(reg: usize) -> u32 {
-    reg32_read(ICD_ADDRESS + reg)
-}
-*/
 
-pub fn pl390_initialize(icc_address: usize, idc_address: usize) {
+pub unsafe fn icd_set_config(intno: IntNo, config: u8)
+{
+    let n = intno as usize >> 4;
+    let s = (intno as u32 & 0x0f) * 2;
+
+    let mut val = read_icdicfr(n);
+    val &= !(0x03 << s);
+    val |= (config as u32 & 0x03) << s;
+    write_icdicfr(n, val);
+}
+
+
+pub fn initialize(icc_address: usize, idc_address: usize) {
     unsafe {
         ICC_ADDRESS = icc_address;
         ICD_ADDRESS = idc_address;
@@ -195,8 +210,16 @@ pub fn interrupt_enable(intno: IntNo) {
     }
 }
 
+// 割込み優先度変更
+pub fn interrupt_set_priority(intno: IntNo, pri: u8)
+{
+    unsafe {
+        write_icdipr(intno as usize, pri);
+    }
+}
 
-// 割り込みハンドラ
+
+// 割り込みハンドラ登録
 static mut INTERRUPT_HANDLERS: [Option<fn()>; 255] = [None; 255];
 
 pub unsafe fn interrupt_set_handler(intno: IntNo, handler: Option<fn()>) {
@@ -206,7 +229,7 @@ pub unsafe fn interrupt_set_handler(intno: IntNo, handler: Option<fn()>) {
 
 
 // 割込みコントローラの割込み処理
-pub (in crate) unsafe fn interrupt_handler(_inhno: isize) {
+pub (in crate) unsafe fn interrupt_handler(_: isize) {
     // 割込み番号取得
     let icciar = read_icciar();
     let intno = icciar as usize;
