@@ -52,9 +52,9 @@ pub unsafe fn timer_initialize() {
     let ttc = &mut *(0xFF130000 as *mut Ttc);
 
     kernel::irc::interrupt_set_handler(74, Some(timer_int_handler));
+    kernel::irc::interrupt_set_priority(74, 0xa0);
     kernel::irc::interrupt_enable(74);
-//    vchg_ilv(OS_TIMER_INTNO, 0xa0);
-//    ena_int(OS_TIMER_INTNO);
+//  kernel::irc::interrupt_disable(74);
 
     // タイマ動作開始
     core::ptr::write_volatile(&mut ttc.counter_control_1, 0x31); // stop and reset
@@ -69,15 +69,27 @@ pub unsafe fn timer_initialize() {
     core::ptr::write_volatile(&mut ttc.counter_control_1, 0x22); // start
 }
 
+pub fn timer_get_counter_value() -> u32 {
+    unsafe {
+        let ttc = &mut *(0xFF130000 as *mut Ttc);
+        core::ptr::read_volatile(&mut ttc.counter_value_1)
+    }
+}
+
+static mut TIMER_COUNTER: u32 = 0;
+
 // タイマ割込みハンドラ
 fn timer_int_handler() {
     unsafe {
         let ttc = &mut *(0xFF130000 as *mut Ttc);
-
+        
         //  割込み要因クリア
         core::ptr::read_volatile(&mut ttc.interrupt_register_1); // 読み出すとクリア
-
-        println!("timer");
+        
+        TIMER_COUNTER = TIMER_COUNTER.wrapping_add(1);
+        if TIMER_COUNTER % 1000 == 0 {
+            println!("timer");
+        }
     }
 }
 

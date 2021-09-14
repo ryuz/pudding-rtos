@@ -35,21 +35,62 @@ use kernel::task::*;
 static mut STACK_INT: [isize; 512] = [0; 512];
 
 
+fn debug_print(str: &str)
+{
+    println!("{}", str);
+}
+
+
+mod memdump;
+
+use kernel::irc::pl390;
+
 // main
 #[no_mangle]
 pub unsafe extern "C" fn main() -> ! {
     wait(10000);
     println!("Hello world");
-    
+
+    /*
+    println!("---- ICC ----");
+    memdump::memdump(0xf9001000, 32);
+    println!("---- IDC ----");
+    memdump::memdump(0xf9000000, 32);
+    println!("-------------");
+    */
+
     println!("Start");
     {
+        kernel::set_debug_print(Some(debug_print));
+
         kernel::initialize();
         kernel::cpu::interrupt_initialize(&mut STACK_INT);
-        kernel::irc::pl390::pl390_initialize(0xf9001000, 0xf9000000);
+        pl390::initialize(0xf9001000, 0xf9000000);
+
+        let targetcpu: u8 = 0x01;
+        pl390::icd_disable();
+
+        // set TTC0-1
+        pl390::icd_set_target(74, targetcpu);
+    
+        // PL
+        for i in 0..8 {
+            pl390::icd_set_target(121 + i, targetcpu);
+            pl390::icd_set_config(121 + i, 0x01);       // 0x01: level, 0x03: edge
+        }
+        for i in 0..8 {
+            pl390::icd_set_target(136 + i, targetcpu);
+            pl390::icd_set_config(136 + i, 0x01);       // 0x01: level, 0x03: edge
+        }
+        
+        pl390::icd_enable(); 
+
+
         timer::timer_initialize();
         
 
         wait(100);
+//      println!("timer:{}", timer::timer_get_counter_value());
         
         static mut STACK0: [isize; 256] = [0; 256];
         static mut STACK1: [isize; 256] = [0; 256];
@@ -67,9 +108,11 @@ pub unsafe extern "C" fn main() -> ! {
 
     let mut i:i32 = 0;
     loop {
+        kernel::cpu::cpu_unlock();
+//      println!("timer:{}", timer::timer_get_counter_value());
         println!("loop:{}", i);
         i += 1;
-        wait(10000000);
+        wait(400000);
     }
 }
 
