@@ -1,5 +1,9 @@
 
+#![allow(dead_code)]
 
+use driver::cdns::ttc::Ttc;
+
+/*
 // TTCレジスタ
 #[repr(C)]
 struct Ttc {
@@ -37,6 +41,7 @@ struct Ttc {
     pub event_register_2: u32,
     pub event_register_3: u32,
 }
+*/
 
 //const TIMER_INTNO: i32 = 74;
 

@@ -1,0 +1,40 @@
+#![allow(dead_code)]
+
+// TTCレジスタ
+#[repr(C)]
+pub struct Ttc {
+    pub clock_control_1: u32,
+    pub clock_control_2: u32,
+    pub clock_control_3: u32,
+    pub counter_control_1: u32,
+    pub counter_control_2: u32,
+    pub counter_control_3: u32,
+    pub counter_value_1: u32,
+    pub counter_value_2: u32,
+    pub counter_value_3: u32,
+    pub interval_counter_1: u32,
+    pub interval_counter_2: u32,
+    pub interval_counter_3: u32,
+    pub match_1_counter_1: u32,
+    pub match_1_counter_2: u32,
+    pub match_1_counter_3: u32,
+    pub match_2_counter_1: u32,
+    pub match_2_counter_2: u32,
+    pub match_2_counter_3: u32,
+    pub match_3_counter_1: u32,
+    pub match_3_counter_2: u32,
+    pub match_3_counter_3: u32,
+    pub interrupt_register_1: u32,
+    pub interrupt_register_2: u32,
+    pub interrupt_register_3: u32,
+    pub interrupt_enable_1: u32,
+    pub interrupt_enable_2: u32,
+    pub interrupt_enable_3: u32,
+    pub event_control_timer_1: u32,
+    pub event_control_timer_2: u32,
+    pub event_control_timer_3: u32,
+    pub event_register_1: u32,
+    pub event_register_2: u32,
+    pub event_register_3: u32,
+}
+

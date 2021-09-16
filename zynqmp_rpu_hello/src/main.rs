@@ -43,7 +43,7 @@ fn debug_print(str: &str)
 
 mod memdump;
 
-use kernel::irc::pl390;
+// use kernel::irc::pl390;
 
 // main
 #[no_mangle]
@@ -65,25 +65,27 @@ pub unsafe extern "C" fn main() -> ! {
 
         kernel::initialize();
         kernel::cpu::interrupt_initialize(&mut STACK_INT);
-        pl390::initialize(0xf9001000, 0xf9000000);
+
+        kernel::irc::pl390::initialize(0xf9001000, 0xf9000000);
+        let pl390 = kernel::irc::pl390::take();
 
         let targetcpu: u8 = 0x01;
-        pl390::icd_disable();
+        pl390.icd_disable();
 
         // set TTC0-1
-        pl390::icd_set_target(74, targetcpu);
+        pl390.icd_set_target(74, targetcpu);
     
         // PL
         for i in 0..8 {
-            pl390::icd_set_target(121 + i, targetcpu);
-            pl390::icd_set_config(121 + i, 0x01);       // 0x01: level, 0x03: edge
+            pl390.icd_set_target(121 + i, targetcpu);
+            pl390.icd_set_config(121 + i, 0x01);       // 0x01: level, 0x03: edge
         }
         for i in 0..8 {
-            pl390::icd_set_target(136 + i, targetcpu);
-            pl390::icd_set_config(136 + i, 0x01);       // 0x01: level, 0x03: edge
+            pl390.icd_set_target(136 + i, targetcpu);
+            pl390.icd_set_config(136 + i, 0x01);       // 0x01: level, 0x03: edge
         }
         
-        pl390::icd_enable(); 
+        pl390.icd_enable(); 
 
 
         timer::timer_initialize();

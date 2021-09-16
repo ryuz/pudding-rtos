@@ -1,7 +1,12 @@
 
 
-pub mod cp;
-pub mod mpu;
+
+//pub mod cp;
+//pub mod mpu;
+
+pub use driver::arm::cpu;
+pub use driver::arm::mpu;
+pub use driver::arm::vfp;
 
 
 #[repr(C)]

@@ -1,5 +1,6 @@
 // ハードウェアセットアップ
-use kernel::cpu::arm::cp::*;
+
+use kernel::cpu::arm::cpu::*;
 use kernel::cpu::arm::mpu::*;
 use core::ptr;
 

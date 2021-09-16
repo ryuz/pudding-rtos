@@ -1,5 +1,5 @@
 
-
+#![allow(dead_code)]
 
 pub fn memdump(addr:usize, len:usize)
 {
