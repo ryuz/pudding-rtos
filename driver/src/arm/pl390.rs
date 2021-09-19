@@ -133,6 +133,14 @@ impl Pl390 {
         }
     }
 
+    // 割込み保留クリア
+    pub fn interrupt_pending_clear(&self, intno: usize) {
+        unsafe {
+            self.write_icdicpr(intno/32, 1u32 << (intno%32));
+        }
+    }
+
+
 
     // ----- レジスタアクセス -----
 

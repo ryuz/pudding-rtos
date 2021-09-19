@@ -1,4 +1,3 @@
-
 #![allow(dead_code)]
 
 use driver::cdns::ttc::Ttc;
@@ -13,7 +12,6 @@ const TTC_INTNO   :usize = 74;
 
 
 // OS用タイマ初期化ルーチン
-#[no_mangle]
 pub unsafe fn timer_initialize() {
     let ttc = &mut *(TTC_ADDRESS as *mut Ttc);
 
@@ -21,9 +19,18 @@ pub unsafe fn timer_initialize() {
     core::ptr::write_volatile(&mut ttc.counter_control_1, 0x31); // stop and reset
     core::ptr::write_volatile(&mut ttc.counter_control_1, 0x21); // stop
 
+    core::ptr::read_volatile(&mut ttc.interrupt_register_1);        // 読み出すとクリア
+    core::ptr::write_volatile(&mut ttc.interrupt_register_1, 0x00); // Interrupt : Interval
+    core::ptr::write_volatile(&mut ttc.interrupt_enable_1, 0x00);   // Interrupt disable
+}
+
+
+pub unsafe fn timer_start() {
+    let ttc = &mut *(TTC_ADDRESS as *mut Ttc);
+
     core::ptr::write_volatile(&mut ttc.clock_control_1, 0x03); // PS_VAL:1, PS_EN:1
-    core::ptr::write_volatile(&mut ttc.interval_counter_1, 25000 - 1); // 1kHz (CPU_1x:100MHz)
-//  core::ptr::write_volatile(&mut ttc.interval_counter_1, 250000 - 1); // 1Hz (CPU_1x:100MHz)
+//  core::ptr::write_volatile(&mut ttc.interval_counter_1, 25000 - 1); // 1kHz (CPU_1x:100MHz)
+    core::ptr::write_volatile(&mut ttc.interval_counter_1, 25000000 - 1); // 1Hz (CPU_1x:100MHz)
 
     core::ptr::write_volatile(&mut ttc.interrupt_register_1, 0x01); // Interrupt : Interval
     core::ptr::write_volatile(&mut ttc.interrupt_enable_1, 0x01); // Interrupt enable
@@ -31,10 +38,17 @@ pub unsafe fn timer_initialize() {
     core::ptr::write_volatile(&mut ttc.counter_control_1, 0x22); // start
 }
 
-pub fn timer_get_counter_value() -> u32 {
+pub fn timer_get_counter1_value() -> u32 {
     unsafe {
         let ttc = &mut *(TTC_ADDRESS as *mut Ttc);
         core::ptr::read_volatile(&mut ttc.counter_value_1)
+    }
+}
+
+pub fn timer_get_counter2_value() -> u32 {
+    unsafe {
+        let ttc = &mut *(TTC_ADDRESS as *mut Ttc);
+        core::ptr::read_volatile(&mut ttc.counter_value_2)
     }
 }
 

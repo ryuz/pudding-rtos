@@ -13,6 +13,8 @@
                 .global     _irq_handler
                 .global     _fiq_handler
 
+                .extern     irq_handler
+
                 .extern     ___bss
                 .extern     ___bss_end
                 .extern     ___usr_stack_end
@@ -150,8 +152,11 @@ _pre_handler:
 _abt_handler:   
                 b       _abt_handler
 
-//_irq_handler:   
-//                b       _irq_handler
+_irq_handler:   
+                push    {r0-r3, r12, lr} 
+                bl      irq_handler
+                pop     {r0-r3, r12, lr}
+                subs    pc, lr, #4
 
 _fiq_handler:   
                 b       _fiq_handler
