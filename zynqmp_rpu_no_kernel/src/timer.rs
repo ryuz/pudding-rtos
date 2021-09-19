@@ -15,58 +15,45 @@ const TTC_INTNO   :usize = 74;
 pub unsafe fn timer_initialize() {
     let ttc = &mut *(TTC_ADDRESS as *mut Ttc);
 
-    // タイマ動作開始
+    // タイマ停止
     core::ptr::write_volatile(&mut ttc.counter_control_1, 0x31); // stop and reset
     core::ptr::write_volatile(&mut ttc.counter_control_1, 0x21); // stop
 
+    core::ptr::write_volatile(&mut ttc.counter_control_2, 0x31); // stop and reset
+    core::ptr::write_volatile(&mut ttc.counter_control_2, 0x21); // stop
+
+    // 割り込み停止
     core::ptr::read_volatile(&mut ttc.interrupt_register_1);        // 読み出すとクリア
     core::ptr::write_volatile(&mut ttc.interrupt_register_1, 0x00); // Interrupt : Interval
     core::ptr::write_volatile(&mut ttc.interrupt_enable_1, 0x00);   // Interrupt disable
 }
 
 
+// タイマ動作開始
 pub unsafe fn timer_start() {
     let ttc = &mut *(TTC_ADDRESS as *mut Ttc);
 
     core::ptr::write_volatile(&mut ttc.clock_control_1, 0x03); // PS_VAL:1, PS_EN:1
-//  core::ptr::write_volatile(&mut ttc.interval_counter_1, 25000 - 1); // 1kHz (CPU_1x:100MHz)
     core::ptr::write_volatile(&mut ttc.interval_counter_1, 25000000 - 1); // 1Hz (CPU_1x:100MHz)
 
     core::ptr::write_volatile(&mut ttc.interrupt_register_1, 0x01); // Interrupt : Interval
     core::ptr::write_volatile(&mut ttc.interrupt_enable_1, 0x01); // Interrupt enable
 
-    core::ptr::write_volatile(&mut ttc.counter_control_1, 0x22); // start
+    core::ptr::write_volatile(&mut ttc.counter_control_1, 0x22); // start (interval timer)
+    core::ptr::write_volatile(&mut ttc.counter_control_2, 0x20); // start (free run)
 }
 
-pub fn timer_get_counter1_value() -> u32 {
-    unsafe {
-        let ttc = &mut *(TTC_ADDRESS as *mut Ttc);
-        core::ptr::read_volatile(&mut ttc.counter_value_1)
-    }
-}
-
-pub fn timer_get_counter2_value() -> u32 {
+pub fn timer_get_counter_value() -> u32 {
     unsafe {
         let ttc = &mut *(TTC_ADDRESS as *mut Ttc);
         core::ptr::read_volatile(&mut ttc.counter_value_2)
     }
 }
 
-static mut TIMER_COUNTER: u32 = 0;
-
-// タイマ割込みハンドラ
-pub fn timer_int_handler() {
+pub fn timer_int_clear() {
     unsafe {
         let ttc = &mut *(TTC_ADDRESS as *mut Ttc);
-        
-        //  割込み要因クリア
-        core::ptr::read_volatile(&mut ttc.interrupt_register_1); // 読み出すとクリア
-        println!("timer irq");
-        
-        TIMER_COUNTER = TIMER_COUNTER.wrapping_add(1);
-        if TIMER_COUNTER % 1000 == 0 {
-            println!("timer irq");
-        }
+        core::ptr::read_volatile(&mut ttc.interrupt_register_1); // //  割込み要因クリア(読み出すとクリア)
     }
 }
 

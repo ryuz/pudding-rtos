@@ -3,9 +3,9 @@ ENTRY(_rst_handler)
 
 MEMORY
 {
-	vector : o = 0x00000000, l = 0x00000040		/* A-TCM */
-	ram0   : o = 0x00000040, l = 0x0000ffc0		/* A-TCM */
-	ram1   : o = 0x00020000, l = 0x00010000		/* B-TCM */
+	vector : o = 0x00000000, l = 0x00000040		/* TCM-A */
+	ram0   : o = 0x00000040, l = 0x0000ffc0		/* TCM-A */
+	ram1   : o = 0x00020000, l = 0x00010000		/* TCM-B0/1 */
 }
 
 SECTIONS

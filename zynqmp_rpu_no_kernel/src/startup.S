@@ -117,7 +117,7 @@ _rst_handler:
                 isb
 
                 /* H/W 初期化 */
-//              bl      bootstrap
+                bl      bootstrap
 
                 /* BSS領域の初期化 */
                 ldr     r0, =___bss

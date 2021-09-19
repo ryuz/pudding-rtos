@@ -31,13 +31,11 @@ static mut PL390:Pl390 = Pl390 {icc:0xf9001000, icd:0xf9000000};
 #[no_mangle]
 pub unsafe extern "C" fn main() -> ! {
     wait(10000);
-    println!("Hello world");
+    println!("Hello world!");
 
     // タイマ初期化
     timer::timer_initialize();
     irq_initialize();
-
-
 
 /*
     println!("---- ICC --------");
@@ -50,16 +48,16 @@ pub unsafe extern "C" fn main() -> ! {
     
     timer::timer_start();
 
-
     cpu::irq_enable();
 
     loop {
-        wait(100000);
-        println!("{}", timer::timer_get_counter1_value());
+        wait(1000000);
+        println!("counter:{}", timer::timer_get_counter_value());
     }
 }
 
 
+// ループによるウェイト
 fn wait(n: i32) {
     let mut v: i32 = 0;
     for i in 1..n {
@@ -68,18 +66,26 @@ fn wait(n: i32) {
 }
 
 
+// 割り込みハンドラ
 #[no_mangle]
 pub unsafe extern "C" fn irq_handler() {
     // 割込み番号取得
     let icciar = PL390.read_icciar();
 
     match icciar {
-        74 => { timer::timer_int_handler(); },
+        74 => { timer_handler(); },
         _ => (),
     }
 
     // 割り込みを終わらせる
     PL390.write_icceoir(icciar);
+}
+
+
+// タイマ割込みハンドラ
+pub fn timer_handler() {
+    timer::timer_int_clear();
+    println!("timer irq");
 }
 
 
@@ -109,3 +115,5 @@ unsafe fn irq_initialize()
     pl390.interrupt_set_priority(74, 0xa0);
     pl390.interrupt_enable(74);
 }
+
+
