@@ -1,5 +1,9 @@
 #![allow(dead_code)]
 
+
+// https://ryuz.hatenablog.com/entry/2021/04/03/194046
+
+
 use core::ptr;
 
 

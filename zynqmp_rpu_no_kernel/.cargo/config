@@ -1,0 +1,5 @@
+[target.armv7r-none-eabi]
+rustflags = ["-C", "link-args=-Tlink.lds", "-C", "target-feature=+vfp2"]
+
+[build]
+target = "armv7r-none-eabi"

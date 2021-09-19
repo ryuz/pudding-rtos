@@ -24,7 +24,7 @@ static mut _KERNEL_CPU_CB: CpuControlBlock = CpuControlBlock {
 };
 
 
-pub unsafe fn cpu_initialize() {
+pub unsafe fn initialize() {
 }
 
 
