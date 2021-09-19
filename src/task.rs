@@ -54,7 +54,7 @@ fn task_eq(task0: &Task, task1: &Task) -> bool {
 }
 */
 
-pub (in crate) unsafe fn task_switch() {
+pub (crate) unsafe fn task_switch() {
     let head = READY_QUEUE.front();
     match head {
         None => {
@@ -91,7 +91,7 @@ impl Task {
         let task_ptr = self as *mut Task;
         self.context.create(stack, task_entry, task_ptr as isize);
     }
-
+    
     /*
     fn is_current(&self) -> bool {
         self.context.is_current()
