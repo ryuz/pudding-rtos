@@ -2,8 +2,10 @@
 #![feature(asm)]
 
 
+pub mod cpu;
+pub mod irc;
+
 pub mod system;
-pub mod register;
 
 #[macro_use]
 pub mod context;
@@ -11,11 +13,10 @@ pub mod context;
 #[macro_use]
 pub mod task;
 
-pub mod cpu;
-pub mod irc;
+pub mod interrupt;
 
 
-pub fn initialize() {
+pub unsafe fn initialize() {
     context::context_initialize();
 }
 
