@@ -109,13 +109,10 @@ pub unsafe extern "C" fn main() -> ! {
     }
     println!("End");
 
-    let mut i:i32 = 0;
     loop {
         kernel::cpu::cpu_unlock();
-//      println!("timer:{}", timer::timer_get_counter_value());
-        println!("loop:{}", i);
-        i += 1;
-        wait(400000);
+        println!("timer:{} [s]", timer::timer_get_counter_value() as f32 / 100000000.0);
+        wait(1000000);
     }
 }
 

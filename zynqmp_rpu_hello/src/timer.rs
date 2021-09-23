@@ -1,85 +1,47 @@
 
 #![allow(dead_code)]
 
-use jelly_pac::cdns::ttc::Ttc;
+use jelly_pac::cdns::ttc::*;
 use jelly_kernel as kernel;
 
-/*
-// TTCレジスタ
-#[repr(C)]
-struct Ttc {
-    pub clock_control_1: u32,
-    pub clock_control_2: u32,
-    pub clock_control_3: u32,
-    pub counter_control_1: u32,
-    pub counter_control_2: u32,
-    pub counter_control_3: u32,
-    pub counter_value_1: u32,
-    pub counter_value_2: u32,
-    pub counter_value_3: u32,
-    pub interval_counter_1: u32,
-    pub interval_counter_2: u32,
-    pub interval_counter_3: u32,
-    pub match_1_counter_1: u32,
-    pub match_1_counter_2: u32,
-    pub match_1_counter_3: u32,
-    pub match_2_counter_1: u32,
-    pub match_2_counter_2: u32,
-    pub match_2_counter_3: u32,
-    pub match_3_counter_1: u32,
-    pub match_3_counter_2: u32,
-    pub match_3_counter_3: u32,
-    pub interrupt_register_1: u32,
-    pub interrupt_register_2: u32,
-    pub interrupt_register_3: u32,
-    pub interrupt_enable_1: u32,
-    pub interrupt_enable_2: u32,
-    pub interrupt_enable_3: u32,
-    pub event_control_timer_1: u32,
-    pub event_control_timer_2: u32,
-    pub event_control_timer_3: u32,
-    pub event_register_1: u32,
-    pub event_register_2: u32,
-    pub event_register_3: u32,
+
+// TTC0 : 0xFF110000 irq:68-70
+// TTC1 : 0xFF120000 irq:71-73
+// TTC2 : 0xFF130000 irq:74-76
+// TTC3 : 0xFF140000 irq:77-79
+const TTC_ADDRESS: usize = 0xff130000;
+const TTC_INTNO: usize = 74;
+
+static mut TTC: Ttc = Ttc{address: TTC_ADDRESS};
+
+
+pub fn timer_initialize() {
+    unsafe {
+        kernel::irc::interrupt_set_handler(TTC_INTNO, Some(timer_int_handler));
+        kernel::irc::interrupt_set_priority(TTC_INTNO, 0xa0);
+        kernel::irc::interrupt_enable(TTC_INTNO);
+        
+        // timer1 (interval timeer)
+        TTC.reset(Timer::Timer1);
+        TTC.set_clock_control(Timer::Timer1, ClockControl::PRESCALER_ENABLE, 1);
+        TTC.set_interval_counter(Timer::Timer1, 25000 - 1); // 1Hz (CPU_1x:100MHz->25MHz)
+
+        TTC.enable_interrupt(Timer::Timer1, Interrupt::INTERVAL);
+        TTC.set_counter_control(
+            Timer::Timer1,
+            CounterControl::INTERVAL | CounterControl::OUTPUT_WAVEFORM_DISABLE,
+        );
+
+        // timer2 (free run counter)
+        TTC.reset(Timer::Timer2);
+        TTC.set_clock_control(Timer::Timer2, ClockControl::NONE, 0);
+        TTC.set_counter_control(Timer::Timer2, CounterControl::OUTPUT_WAVEFORM_DISABLE);
+    }
 }
-*/
 
-//const TIMER_INTNO: i32 = 74;
-
-
-// OS用タイマ初期化ルーチン
-#[no_mangle]
-pub unsafe fn timer_initialize() {
-
-    // TTC0 : 0xFF110000
-    // TTC1 : 0xFF120000
-    // TTC2 : 0xFF140000
-    // TTC3 : 0xFF140000
-    let ttc = &mut *(0xFF130000 as *mut Ttc);
-
-    kernel::irc::interrupt_set_handler(74, Some(timer_int_handler));
-    kernel::irc::interrupt_set_priority(74, 0xa0);
-    kernel::irc::interrupt_enable(74);
-//  kernel::irc::interrupt_disable(74);
-
-    // タイマ動作開始
-    core::ptr::write_volatile(&mut ttc.counter_control_1, 0x31); // stop and reset
-    core::ptr::write_volatile(&mut ttc.counter_control_1, 0x21); // stop
-
-    core::ptr::write_volatile(&mut ttc.clock_control_1, 0x03); // PS_VAL:1, PS_EN:1
-    core::ptr::write_volatile(&mut ttc.interval_counter_1, 25000 - 1); // 1kHz (CPU_1x:100MHz)
-
-    core::ptr::write_volatile(&mut ttc.interrupt_register_1, 0x01); // Interrupt : Interval
-    core::ptr::write_volatile(&mut ttc.interrupt_enable_1, 0x01); // Interrupt enable
-
-    core::ptr::write_volatile(&mut ttc.counter_control_1, 0x22); // start
-}
 
 pub fn timer_get_counter_value() -> u32 {
-    unsafe {
-        let ttc = &mut *(0xFF130000 as *mut Ttc);
-        core::ptr::read_volatile(&mut ttc.counter_value_1)
-    }
+    unsafe { TTC.get_counter_value(Timer::Timer2) }
 }
 
 static mut TIMER_COUNTER: u32 = 0;
@@ -87,15 +49,14 @@ static mut TIMER_COUNTER: u32 = 0;
 // タイマ割込みハンドラ
 fn timer_int_handler() {
     unsafe {
-        let ttc = &mut *(0xFF130000 as *mut Ttc);
-        
         //  割込み要因クリア
-        core::ptr::read_volatile(&mut ttc.interrupt_register_1); // 読み出すとクリア
+        TTC.clear_interrupt(Timer::Timer1); // 読み出すとクリア
         
         TIMER_COUNTER = TIMER_COUNTER.wrapping_add(1);
         if TIMER_COUNTER % 1000 == 0 {
-            println!("timer");
+            println!("timer irq");
         }
     }
 }
+
 

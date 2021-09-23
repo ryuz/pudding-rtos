@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 #![cfg(target_arch = "arm")]
-#![cfg(target_feature="vfp2")]
+#![cfg(target_feature = "vfp2")]
 
 /// VFP有効化
 pub unsafe fn enable_vfp() {
@@ -15,4 +15,3 @@ pub unsafe fn enable_vfp() {
         "#
     );
 }
-

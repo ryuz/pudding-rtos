@@ -2,7 +2,6 @@
 #![no_main]
 #![feature(asm)]
 
-
 use jelly_pac::arm::cpu;
 use jelly_pac::arm::pl390::Pl390;
 
@@ -54,7 +53,7 @@ pub unsafe extern "C" fn main() -> ! {
     loop {
         wait(1000000);
         let time = timer::timer_get_counter_value() as f32 / 100000000.0;
-        println!("counter:{} [ms]", time);
+        println!("timer counter:{} [s]", time);
     }
 }
 

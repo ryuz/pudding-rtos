@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 #![cfg(target_arch = "arm")]
 
-
-
 // ----- cache ------
 
 /// Iキャッシュ有効化
@@ -115,9 +113,6 @@ pub unsafe fn disable_ecc() {
     );
 }
 
-
-
-
 // ----- data_regions ------
 
 pub unsafe fn mpu_get_number_of_data_regions() -> u32 {
@@ -224,4 +219,3 @@ pub unsafe fn set_mpu_data_region(
     mpu_set_data_region_size(size.bits());
     mpu_set_data_region_access_control(access_control.bits());
 }
-
