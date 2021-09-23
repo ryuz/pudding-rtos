@@ -61,4 +61,3 @@ pub unsafe fn reg64_read(addr: usize) -> u64 {
     let p = addr as *mut u64;
     ptr::read_volatile(p)
 }
-

@@ -1,11 +1,8 @@
 #![allow(dead_code)]
 
-
 // https://ryuz.hatenablog.com/entry/2021/04/03/194046
 
-
 use core::ptr;
-
 
 // メモリマップドレジスタ定義
 const ICCICR: usize = 0x000; // CPU インタフェース制御レジスタ
@@ -56,13 +53,11 @@ unsafe fn reg32_read(addr: usize) -> u32 {
     ptr::read_volatile(p)
 }
 
-
 // PL390
 pub struct Pl390 {
     pub icc: usize,
     pub icd: usize,
 }
-
 
 impl Pl390 {
     // 生成
@@ -93,14 +88,12 @@ impl Pl390 {
     }
 
     // ターゲットCPU設定
-    pub unsafe fn icd_set_target(&self, intno: usize, targetcpu: u8)
-    {
+    pub unsafe fn icd_set_target(&self, intno: usize, targetcpu: u8) {
         self.write_icdiptr(intno, targetcpu);
     }
 
     // ターゲットCPU設定
-    pub unsafe fn icd_set_config(&self, intno: usize, config: u8)
-    {
+    pub unsafe fn icd_set_config(&self, intno: usize, config: u8) {
         let n = intno as usize >> 4;
         let s = (intno as u32 & 0x0f) * 2;
 
@@ -109,7 +102,6 @@ impl Pl390 {
         val |= (config as u32 & 0x03) << s;
         self.write_icdicfr(n, val);
     }
-
 
     // 割込みの禁止
     pub fn interrupt_disable(&self, intno: usize) {
@@ -126,8 +118,7 @@ impl Pl390 {
     }
 
     // 割込み優先度変更
-    pub fn interrupt_set_priority(&self, intno: usize, pri: u8)
-    {
+    pub fn interrupt_set_priority(&self, intno: usize, pri: u8) {
         unsafe {
             self.write_icdipr(intno, pri);
         }
@@ -136,11 +127,9 @@ impl Pl390 {
     // 割込み保留クリア
     pub fn interrupt_pending_clear(&self, intno: usize) {
         unsafe {
-            self.write_icdicpr(intno/32, 1u32 << (intno%32));
+            self.write_icdicpr(intno / 32, 1u32 << (intno % 32));
         }
     }
-
-
 
     // ----- レジスタアクセス -----
 
@@ -264,6 +253,5 @@ impl Pl390 {
     // ソフトウェア生成割り込みレジスタ
     pub unsafe fn write_icdsgir(&self, data: u32) {
         reg32_write(self.icd + ICDSGIR, data);
-    }    
+    }
 }
-

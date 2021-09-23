@@ -1,11 +1,9 @@
 #![allow(dead_code)]
 #![cfg(target_arch = "arm")]
 
-
 // T_Bit  0x20
 // F_Bit  0x40
 // I_Bit  0x80
-
 
 pub unsafe fn fiq_enable() {
     asm!(
@@ -26,7 +24,6 @@ pub unsafe fn fiq_disable() {
         "#
     );
 }
-
 
 pub unsafe fn irq_enable() {
     asm!(
@@ -68,14 +65,12 @@ pub unsafe fn int_disable() {
     );
 }
 
-
 /// 割り込み待ち
 pub unsafe fn wfi() -> ! {
     loop {
         asm!("wfi");
     }
 }
-
 
 ///  分岐予測有効化
 pub unsafe fn enable_bpredict() {
@@ -104,4 +99,3 @@ pub unsafe fn disable_bpredict() {
         "#
     );
 }
-
