@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 
-use driver::arm::pl390::Pl390;
+use jelly_pac::arm::pl390::Pl390;
 
 
 static mut PL390: Pl390 = Pl390 { icc:0, icd: 0 };

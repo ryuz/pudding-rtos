@@ -15,19 +15,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a72c244c1ff497a746a7e1fb3d14bd08420ecda70c8f25c7112f2781652d787"
 
 [[package]]
-name = "driver"
-version = "0.1.0"
-dependencies = [
- "bitflags",
-]
-
-[[package]]
-name = "kernel"
+name = "jelly-kernel"
 version = "0.1.0"
 dependencies = [
  "bitflags",
  "cc",
- "driver",
+ "jelly-pac",
+]
+
+[[package]]
+name = "jelly-pac"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
 ]
 
 [[package]]
@@ -35,6 +35,6 @@ name = "zynqmp_rpu_hello"
 version = "0.1.0"
 dependencies = [
  "cc",
- "driver",
- "kernel",
+ "jelly-kernel",
+ "jelly-pac",
 ]

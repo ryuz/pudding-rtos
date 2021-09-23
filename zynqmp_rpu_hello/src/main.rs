@@ -26,8 +26,9 @@ fn panic(_panic: &PanicInfo<'_>) -> ! {
 
 
 #[macro_use]
-extern crate kernel;
+extern crate jelly_kernel;
 
+use jelly_kernel as kernel;
 use kernel::context::*;
 use kernel::task::*;
 
@@ -61,13 +62,13 @@ pub unsafe extern "C" fn main() -> ! {
 
     println!("Start");
     {
-        kernel::set_debug_print(Some(debug_print));
+        jelly_kernel::set_debug_print(Some(debug_print));
 
-        kernel::initialize();
-        kernel::interrupt::initialize(&mut STACK_INT);
+        jelly_kernel::initialize();
+        jelly_kernel::interrupt::initialize(&mut STACK_INT);
 
-        kernel::irc::pl390::initialize(0xf9001000, 0xf9000000);
-        let pl390 = kernel::irc::pl390::take();
+        jelly_kernel::irc::pl390::initialize(0xf9001000, 0xf9000000);
+        let pl390 = jelly_kernel::irc::pl390::take();
 
         let targetcpu: u8 = 0x01;
         pl390.icd_disable();

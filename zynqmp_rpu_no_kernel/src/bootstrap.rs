@@ -1,8 +1,8 @@
 // ハードウェアセットアップ
 
-use driver::arm::cpu::*;
-use driver::arm::mpu::*;
 use core::ptr;
+use jelly_pac::arm::cpu::*;
+use jelly_pac::arm::mpu::*;
 
 #[no_mangle]
 pub unsafe extern "C" fn bootstrap() {

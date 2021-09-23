@@ -1,7 +1,7 @@
 // ハードウェアセットアップ
 
-use kernel::cpu::arm::cpu::*;
-use kernel::cpu::arm::mpu::*;
+use jelly_pac::arm::cpu::*;
+use jelly_pac::arm::mpu::*;
 use core::ptr;
 
 #[no_mangle]

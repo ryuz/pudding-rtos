@@ -1,7 +1,8 @@
 
 #![allow(dead_code)]
 
-use driver::cdns::ttc::Ttc;
+use jelly_pac::cdns::ttc::Ttc;
+use jelly_kernel as kernel;
 
 /*
 // TTCレジスタ

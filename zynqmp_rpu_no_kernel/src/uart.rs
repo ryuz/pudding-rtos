@@ -34,6 +34,10 @@ fn uart_wait() {
 
 // 1文字出力
 pub fn uart_write(c: i32) {
+    if c == '\n' as i32 {
+        uart_write('\r' as i32);
+    }
+
     while (read_reg(UART_CHANNEL_STS) & 0x10) != 0 {
         uart_wait();
     }
@@ -48,8 +52,8 @@ macro_rules! print {
 
 #[macro_export]
 macro_rules! println {
-    ($fmt:expr) => (print!(concat!($fmt, "\r\n")));
-    ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\r\n"), $($arg)*));
+    ($fmt:expr) => (print!(concat!($fmt, "\n")));
+    ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\n"), $($arg)*));
 }
 
 pub fn _print(args: fmt::Arguments) {
