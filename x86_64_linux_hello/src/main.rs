@@ -1,12 +1,10 @@
 
 
-#[macro_use]
-extern crate jelly_kernel;
+
+
 
 use jelly_kernel as kernel;
-use kernel::context::*;
-use kernel::task::*;
-
+use kernel::*;
 
 static mut STACK0: [isize; 256] = [0; 256];
 static mut TASK0: Task = task_default!();
@@ -19,7 +17,7 @@ fn main() {
     println!("Start");
     unsafe {
         
-        kernel::initialize();
+        jelly_kernel::initialize();
         TASK0.create(0, task0, 0, &mut STACK0);
         TASK1.create(0, task1, 0, &mut STACK1);
 

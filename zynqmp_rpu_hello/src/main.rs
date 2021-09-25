@@ -25,17 +25,6 @@ fn panic(_panic: &PanicInfo<'_>) -> ! {
 }
 
 
-#[macro_use]
-extern crate jelly_kernel;
-
-use jelly_kernel as kernel;
-use kernel::context::*;
-use kernel::task::*;
-
-
-static mut STACK_INT: [isize; 512] = [0; 512];
-
-
 fn debug_print(str: &str)
 {
     println!("{}", str);
@@ -45,6 +34,14 @@ fn debug_print(str: &str)
 mod memdump;
 
 // use kernel::irc::pl390;
+
+
+
+
+use jelly_kernel as kernel;
+use kernel::*;
+
+static mut STACK_INT: [isize; 512] = [0; 512];
 
 // main
 #[no_mangle]
@@ -62,12 +59,12 @@ pub unsafe extern "C" fn main() -> ! {
 
     println!("Start");
     {
-        jelly_kernel::set_debug_print(Some(debug_print));
+        kernel::set_debug_print(Some(debug_print));
 
-        jelly_kernel::initialize();
-        jelly_kernel::interrupt::initialize(&mut STACK_INT);
+        kernel::initialize();
+        kernel::interrupt::initialize(&mut STACK_INT);
 
-        jelly_kernel::irc::pl390::initialize(0xf9001000, 0xf9000000);
+        kernel::irc::pl390::initialize(0xf9001000, 0xf9000000);
         let pl390 = jelly_kernel::irc::pl390::take();
 
         let targetcpu: u8 = 0x01;
@@ -91,7 +88,7 @@ pub unsafe extern "C" fn main() -> ! {
 
         timer::timer_initialize();
         
-
+        
         wait(100);
 //      println!("timer:{}", timer::timer_get_counter_value());
         
@@ -105,12 +102,12 @@ pub unsafe extern "C" fn main() -> ! {
         TASK0.activate();
         TASK1.activate();
 
-        kernel::cpu::cpu_unlock();
+//        kernel::cpu::cpu_unlock();
     }
     println!("End");
 
     loop {
-        kernel::cpu::cpu_unlock();
+//        kernel::cpu::cpu_unlock();
         println!("timer:{} [s]", timer::timer_get_counter_value() as f32 / 100000000.0);
         wait(1000000);
     }

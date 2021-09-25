@@ -2,21 +2,31 @@
 #![feature(asm)]
 
 
+#[macro_use]
 pub mod cpu;
-pub mod irc;
-
-pub mod system;
+pub use cpu::*;
 
 #[macro_use]
 pub mod context;
 
-#[macro_use]
-pub mod task;
+pub mod system;
 
+pub mod irc;
 pub mod interrupt;
 
 
+#[macro_use]
+pub mod task;
+pub use task::*;
+
+#[macro_use]
+pub mod semaphore;
+pub use semaphore::*;
+
+
+
 pub unsafe fn initialize() {
+    cpu::cpu_initialize();
     context::context_initialize();
 }
 
@@ -39,3 +49,4 @@ pub fn debug_print(str: &str)
         }
     }
 }
+

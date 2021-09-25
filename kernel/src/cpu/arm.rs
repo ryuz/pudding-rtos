@@ -1,8 +1,4 @@
-
-
-
-//pub mod cp;
-//pub mod mpu;
+#![allow(dead_code)]
 
 pub use jelly_pac::arm::cpu;
 pub use jelly_pac::arm::mpu;
@@ -10,7 +6,20 @@ pub use jelly_pac::arm::vfp;
 
 
 #[repr(C)]
-pub struct CpuControlBlock {
+pub struct Context {
+    pub sp: usize,
+}
+
+#[macro_export]
+macro_rules! context_default {
+    () => {
+        $crate::cpu::arm::Context { sp: 0 }
+    };
+}
+
+
+#[repr(C)]
+struct CpuControlBlock {
     pub imask: u32, // 割り込みマスク状態
     pub inest: u32, // 多重割り込みネスト回数
     pub isp: u32,   // 割り込みスタック初期値
@@ -24,18 +33,17 @@ static mut _KERNEL_CPU_CB: CpuControlBlock = CpuControlBlock {
 };
 
 
-pub unsafe fn initialize() {
+pub (crate) unsafe fn cpu_initialize() {
 }
 
 
-pub unsafe fn interrupt_initialize(stack: &mut [isize]) {
+pub (crate) unsafe fn interrupt_initialize(stack: &mut [isize]) {
     let isp = (&stack[0] as *const isize as usize) + stack.len() * core::mem::size_of::<isize>();
     _KERNEL_CPU_CB.isp = isp as u32;
 }
 
 
-
-pub unsafe fn cpu_lock() {
+pub (crate) unsafe fn cpu_lock() {
     asm!(
         r#"
             mrs     r0, cpsr                    /* cpsr取得 */
@@ -45,7 +53,7 @@ pub unsafe fn cpu_lock() {
     );
 }
 
-pub unsafe fn cpu_unlock() {
+pub (crate) unsafe fn cpu_unlock() {
     let imask = _KERNEL_CPU_CB.imask;
     asm!(
         r#"
@@ -59,9 +67,9 @@ pub unsafe fn cpu_unlock() {
 }
 
 
-/// 割り込み待ち
-pub unsafe fn cpu_idle() -> ! {
+pub (crate) unsafe fn cpu_halt() -> ! {
     loop {
         asm!("wfi");
     }
 }
+

@@ -1,17 +1,7 @@
 use core::mem::size_of;
 use core::ptr;
 
-#[repr(C)]
-pub struct Context {
-    pub sp: usize,
-}
-
-#[macro_export]
-macro_rules! context_default {
-    () => {
-        Context { sp: 0 }
-    };
-}
+use crate::cpu::Context;
 
 extern "C" {
     // コンテキスト生成
@@ -29,14 +19,14 @@ extern "C" {
     fn _kernel_context_switch(ctxcb_next: *mut Context, ctxcb_current: *mut Context);
 }
 
-static mut SYSTEM_CONTEXT: Context = Context { sp: 0 };
+static mut SYSTEM_CONTEXT: Context = context_default!();
 static mut CURRENT_CONTEXT: *mut Context = ptr::null_mut();
 
-pub unsafe fn context_switch_to_system() {
+pub (crate) unsafe fn context_switch_to_system() {
     SYSTEM_CONTEXT.switch();
 }
 
-pub fn context_initialize() {
+pub (crate) fn context_initialize() {
     unsafe {
         CURRENT_CONTEXT = &mut SYSTEM_CONTEXT as *mut Context;
     }
@@ -53,15 +43,7 @@ impl Context {
             _kernel_context_create(self, isp as usize, entry, exinf);
         }
     }
-
-    /*
-    pub fn start(&mut self) {
-        unsafe {
-           _kernel_context_start(self);
-        }
-    }
-    */
-
+    
     pub fn switch(&mut self) {
         unsafe {
             let cur_ctx = CURRENT_CONTEXT;

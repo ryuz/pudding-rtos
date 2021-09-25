@@ -1,5 +1,33 @@
 
-use crate::context::*;
+
+#[repr(C)]
+pub struct Context {
+    pub sp: usize,
+}
+
+#[macro_export]
+macro_rules! context_default {
+    () => {
+        Context { sp: 0 }
+    };
+}
+
+
+pub unsafe fn interrupt_initialize(_stack: &mut [isize]) {}
+
+pub unsafe fn cpu_initialize(_stack: &mut [isize]) {}
+
+pub unsafe fn cpu_lock() {}
+
+pub unsafe fn cpu_unlock() {}
+
+pub unsafe fn cpu_halt() {}
+
+
+
+
+
+
 
 #[no_mangle]
 pub extern "C" fn _kernel_context_create(
@@ -19,17 +47,3 @@ pub extern "C" fn _kernel_context_switch(
     _ctxcb_now: *mut Context,
 ) {
 }
-
-
-pub unsafe fn cpu_lock() {}
-
-pub unsafe fn cpu_unlock() {}
-
-pub unsafe fn cpu_idle() -> ! {
-    loop {}
-}
-
-
-pub unsafe fn interrupt_initialize(_stack: &mut [isize]) {
-}
-
