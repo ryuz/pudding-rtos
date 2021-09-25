@@ -43,14 +43,15 @@ use kernel::*;
 
 static mut STACK_INT: [isize; 512] = [0; 512];
 
-static mut STACK0: [isize; 256] = [0; 256];
-static mut STACK1: [isize; 256] = [0; 256];
+static mut STACK0: [isize; 512] = [0; 512];
+static mut STACK1: [isize; 512] = [0; 512];
 static mut TASK0: Task = task_default!();
 static mut TASK1: Task = task_default!();
 
 // main
 #[no_mangle]
 pub unsafe extern "C" fn main() -> ! {
+//  uart_write(0x23);
     wait(10000);
     println!("Hello world");
     
@@ -109,6 +110,7 @@ pub unsafe extern "C" fn main() -> ! {
     loop {
 //        kernel::cpu::cpu_unlock();
         println!("timer:{} [s]", timer::timer_get_counter_value() as f32 / 100000000.0);
+//        println!("state:{}", system::is_interrupt_state());
         wait(1000000);
     }
 }
@@ -118,11 +120,13 @@ pub unsafe extern "C" fn main() -> ! {
 fn task0(_exinf:isize)
 {
     println!("Task0");
+//    println!("state:{}", system::is_interrupt_state());
 }
 
 fn task1(_exinf:isize)
 {
     println!("Task1");
+//    println!("state:{}", system::is_interrupt_state());
 }
 
 
@@ -136,8 +140,9 @@ fn timer_int_handler() {
         
         TIMER_COUNTER = TIMER_COUNTER.wrapping_add(1);
         if TIMER_COUNTER % 1000 == 0 {
+//            println!("timer irq:{}", system::is_interrupt_state());
             println!("timer irq");
-//            TASK0.activate();
+            TASK0.activate();
         }
     }
 }

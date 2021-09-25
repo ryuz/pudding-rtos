@@ -49,7 +49,7 @@ SECTIONS
     .stacks ALIGN(0x08):
     {
         ___usr_stack = . ; 
-        . += 1024;
+        . += 4096;
         ___usr_stack_end = . ;
 
         ___fiq_stack = . ; 

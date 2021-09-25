@@ -113,9 +113,9 @@ _rst_handler:
                 mcr     p15, 0, r0, c7, c5, 0       /* invalidate icache */
                 mcr     p15, 0, r0, c15, c5, 0      /* Invalidate entire data cache*/
                 isb
-
+                
                 /* H/W 初期化 */
-//              bl      bootstrap
+                bl      bootstrap
 
                 /* BSS領域の初期化 */
                 ldr     r0, =___bss
@@ -125,7 +125,6 @@ bss_loop:
                 cmp     r0, r1
                 strcc   r2, [r0], #4
                 bcc     bss_loop
-                
                 
                 /* main関数の呼び出し */
                 bl      main

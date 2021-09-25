@@ -158,6 +158,13 @@ pub fn is_dispatch_pending_state() -> bool {
     }
 }
 
+pub fn is_interrupt_state() -> bool {
+    unsafe {
+        test_interrupt_flag()
+    }
+}
+
+
 pub fn idle_loop() -> ! {
     loop {
         unsafe { cpu_halt(); }
