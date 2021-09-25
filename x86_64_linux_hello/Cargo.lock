@@ -15,16 +15,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d26a6ce4b6a484fa3edb70f7efa6fc430fd2b87285fe8b84304fd0936faa0dc0"
 
 [[package]]
-name = "kernel"
+name = "jelly-kernel"
 version = "0.1.0"
 dependencies = [
  "bitflags",
  "cc",
+ "jelly-pac",
+]
+
+[[package]]
+name = "jelly-pac"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
 ]
 
 [[package]]
 name = "x86_64_linux_hello"
 version = "0.1.0"
 dependencies = [
- "kernel",
+ "jelly-kernel",
 ]

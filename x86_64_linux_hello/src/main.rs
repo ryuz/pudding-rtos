@@ -1,8 +1,9 @@
 
 
 #[macro_use]
-extern crate kernel;
+extern crate jelly_kernel;
 
+use jelly_kernel as kernel;
 use kernel::context::*;
 use kernel::task::*;
 
@@ -31,6 +32,9 @@ fn main() {
 
 fn task0(_exinf: isize) {
     println!("Task0");
+    let t = unsafe { &mut TASK1};
+    t.activate();
+    println!("Task0_end");
 }
 
 fn task1(_exinf: isize) {

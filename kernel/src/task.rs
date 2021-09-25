@@ -1,6 +1,8 @@
 
 use crate::cpu::*;
 use crate::context::*;
+use crate::system::*;
+//use core::panic;
 use core::ptr;
 
 
@@ -81,11 +83,20 @@ impl Task {
         stack: &mut [isize],
     ) {
         extern "C" fn task_entry(exinf: isize) {
-            let task_ptr = exinf as *mut Task;
-            let task = unsafe { &mut *task_ptr };
-            (task.task.unwrap())(task.exinf);
-            task.remove_queue();
-            unsafe { task_switch() };
+            unsafe {
+                let task_ptr = exinf as *mut Task;
+                let task = &mut *task_ptr;
+                loop {
+                    while task.actcnt > 0 {
+                        task.actcnt -= 1;
+                        cpu_unlock();
+                        (task.task.unwrap())(task.exinf);
+                        cpu_lock();
+                    }
+                    task.remove_queue();
+                    task_switch()
+                }
+            }
         }
 
         self.exinf = exinf;
@@ -130,12 +141,12 @@ impl Task {
 
     pub fn activate(&mut self) {
         unsafe {
-            cpu_lock();
+            let _svc = SystemCall::new();
+            self.actcnt += 1;
             if self.queue == ptr::null_mut() {
                 READY_QUEUE.insert_priority_order(self);
+                _kernel_set_dispatch_pending(true);
             }
-            task_switch();
-            cpu_unlock();
         }
     }
 
