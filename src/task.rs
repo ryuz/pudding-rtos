@@ -5,6 +5,8 @@ use core::ptr;
 
 
 pub type Priority = i8;
+pub type ActCount = u8;
+
 
 // Task control block
 // static初期化の為に泣く泣くすべてpubにする
@@ -15,9 +17,10 @@ pub struct Task {
     pub priority: Priority,
     pub task: Option<fn(isize)>,
     pub exinf: isize,
+    pub actcnt: ActCount,
 }
 
-// static初期化時に中身知らなくてよいようにマクロで補助
+// static初期化時に中身を知らなくてよいようにマクロで補助
 #[macro_export]
 macro_rules! task_default {
     () => {
@@ -28,6 +31,7 @@ macro_rules! task_default {
             priority: 0,
             task: None,
             exinf: 0,
+            actcnt: 0,
         }
     };
 }
@@ -127,7 +131,9 @@ impl Task {
     pub fn activate(&mut self) {
         unsafe {
             cpu_lock();
-            READY_QUEUE.insert_priority_order(self);
+            if self.queue == ptr::null_mut() {
+                READY_QUEUE.insert_priority_order(self);
+            }
             task_switch();
             cpu_unlock();
         }
