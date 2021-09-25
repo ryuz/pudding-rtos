@@ -1,9 +1,9 @@
+
+use crate::cpu::*;
+use crate::task::*;
+
+/*
 use bitflags::bitflags;
-
-use crate::cpu::*
-use crate::task::*
-
-
 bitflags! {
     pub struct Status: u8 {
         const TASK = 0x00;
@@ -12,40 +12,74 @@ bitflags! {
         const DISABLE_DSP = 0x04;
     }
 }
+*/
 
-pub struct SystemControlBlock {
-    status: ContextStatus,
+struct SystemControlBlock {
+    cpu_lock: bool,
+    dispatch_disable: bool,
     dispatch_pending: bool,
 }
 
+
 static mut SYSCB: SystemControlBlock = SystemControlBlock {
-    status: ContextStatus::TASK,
+    cpu_lock: false,
+    dispatch_disable: false,
     dispatch_pending: false,
 };
 
 
-pub fn enter_system_call() {
-    cpu_lock();
+pub (crate) unsafe fn _kernel_get_cpu_lock() -> bool {
+    SYSCB.cpu_lock
 }
 
-pub fn leave_system_call() {
+pub (crate) unsafe fn _kernel_set_cpu_lock(cpu_lock: bool) {
+    SYSCB.cpu_lock = cpu_lock;
+}
+
+pub (crate) unsafe fn _kernel_get_dispatch_disable() -> bool {
+    SYSCB.dispatch_disable
+}
+
+pub (crate) unsafe fn _kernel_set_dispatch_disable(dispatch_disable: bool) {
+    SYSCB.dispatch_disable = dispatch_disable;
+}
+
+
+pub (crate) unsafe fn _kernel_get_dispatch_pending() -> bool {
+    SYSCB.dispatch_pending
+}
+
+pub (crate) unsafe fn _kernel_set_dispatch_pending(dispatch_pending: bool) {
+    SYSCB.dispatch_pending = dispatch_pending;
+}
+
+
+
+pub (crate) fn enter_system_call() {
     unsafe {
-        if !SYSCB.status.contains(ContextStatus::DISABLE_DSP) {
+        crate::cpu::cpu_lock();
+    }
+}
+
+pub (crate) fn leave_system_call() {
+     unsafe {
+        if _kernel_get_dispatch_pending() && !_kernel_get_dispatch_disable() {
+            _kernel_set_dispatch_pending(false);
             task_switch();
         }
-
-        if !SYSCB.status.contains(ContextStatus::CPU_LOCK) {
+        
+        if !_kernel_get_cpu_lock() {
             cpu_unlock();
         }
     }
 }
 
 
-pub struct SystemCall {
+pub (crate) struct SystemCall {
 }
 
 impl SystemCall {
-    pub fn new() -> Self {
+    pub (crate) fn new() -> Self {
         enter_system_call();
         Self { }
     }
@@ -57,15 +91,3 @@ impl Drop for SystemCall {
     }
 }
 
-
-
-
-pub fn set_non_task_state() {
-    unsafe {
-        SYSCB.status = SYSCB.status | ContextStatus::NON_TASK;
-    }
-}
-
-pub fn is_dispatch_pending_state() -> bool {
-    unsafe { SYSCB.dispatch_pending }
-}
