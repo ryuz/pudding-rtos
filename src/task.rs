@@ -157,7 +157,7 @@ impl Task {
 
     pub fn activate(&mut self) {
         unsafe {
-            let _svc = SystemCall::new();
+            let _sc = SystemCall::new();
             self.actcnt += 1;
             if self.queue == ptr::null_mut() {
                 READY_QUEUE.insert_priority_order(self);
