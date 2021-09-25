@@ -15,7 +15,7 @@ const TTC_INTNO: usize = 74;
 static mut TTC: Ttc = Ttc{address: TTC_ADDRESS};
 
 
-pub fn timer_initialize() {
+pub fn timer_initialize(timer_int_handler: fn()) {
     unsafe {
         kernel::irc::interrupt_set_handler(TTC_INTNO, Some(timer_int_handler));
         kernel::irc::interrupt_set_priority(TTC_INTNO, 0xa0);
@@ -44,19 +44,8 @@ pub fn timer_get_counter_value() -> u32 {
     unsafe { TTC.get_counter_value(Timer::Timer2) }
 }
 
-static mut TIMER_COUNTER: u32 = 0;
-
-// タイマ割込みハンドラ
-fn timer_int_handler() {
-    unsafe {
-        //  割込み要因クリア
-        TTC.clear_interrupt(Timer::Timer1); // 読み出すとクリア
-        
-        TIMER_COUNTER = TIMER_COUNTER.wrapping_add(1);
-        if TIMER_COUNTER % 1000 == 0 {
-            println!("timer irq");
-        }
-    }
+pub fn timer_clear_interrupt()
+{
+    unsafe { TTC.clear_interrupt(Timer::Timer1); }
 }
-
 

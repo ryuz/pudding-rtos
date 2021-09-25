@@ -43,12 +43,17 @@ use kernel::*;
 
 static mut STACK_INT: [isize; 512] = [0; 512];
 
+static mut STACK0: [isize; 256] = [0; 256];
+static mut STACK1: [isize; 256] = [0; 256];
+static mut TASK0: Task = task_default!();
+static mut TASK1: Task = task_default!();
+
 // main
 #[no_mangle]
 pub unsafe extern "C" fn main() -> ! {
     wait(10000);
     println!("Hello world");
-
+    
     /*
     println!("---- ICC ----");
     memdump::memdump(0xf9001000, 32);
@@ -86,17 +91,12 @@ pub unsafe extern "C" fn main() -> ! {
         pl390.icd_enable(); 
 
 
-        timer::timer_initialize();
+        timer::timer_initialize(timer_int_handler);
         
         
         wait(100);
 //      println!("timer:{}", timer::timer_get_counter_value());
         
-        static mut STACK0: [isize; 256] = [0; 256];
-        static mut STACK1: [isize; 256] = [0; 256];
-        static mut TASK0: Task = task_default!();
-        static mut TASK1: Task = task_default!();
-
         TASK0.create(0, task0, 0, &mut STACK0);
         TASK1.create(1, task1, 1, &mut STACK1);
         TASK0.activate();
@@ -125,4 +125,20 @@ fn task1(_exinf:isize)
     println!("Task1");
 }
 
+
+static mut TIMER_COUNTER: u32 = 0;
+
+// タイマ割込みハンドラ
+fn timer_int_handler() {
+    unsafe {
+        //  割込み要因クリア
+        timer::timer_clear_interrupt();
+        
+        TIMER_COUNTER = TIMER_COUNTER.wrapping_add(1);
+        if TIMER_COUNTER % 1000 == 0 {
+            println!("timer irq");
+//            TASK0.activate();
+        }
+    }
+}
 
