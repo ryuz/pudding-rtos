@@ -1,13 +1,25 @@
 
-pub unsafe fn cpu_lock() {}
 
-pub unsafe fn cpu_unlock() {}
+#[repr(C)]
+pub struct Context {
+    pub sp: usize,
+}
 
-pub unsafe fn cpu_idle() -> ! {
-    loop {}
+#[macro_export]
+macro_rules! context_default {
+    () => {
+        Context { sp: 0 }
+    };
 }
 
 
-pub unsafe fn interrupt_initialize(_stack: &mut [isize]) {
-}
+pub (crate) unsafe fn cpu_initialize() {}
+
+pub (crate) unsafe fn interrupt_initialize(_stack: &mut [isize]) {}
+
+pub (crate) unsafe fn cpu_lock() {}
+
+pub (crate) unsafe fn cpu_unlock() {}
+
+pub (crate) unsafe fn cpu_halt() {}
 

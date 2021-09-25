@@ -1,8 +1,8 @@
+#![allow(dead_code)]
 
 use crate::cpu::*;
 use crate::context::*;
 use crate::system::*;
-//use core::panic;
 use core::ptr;
 
 
@@ -13,7 +13,7 @@ pub type ActCount = u8;
 // Task control block
 // static初期化の為に泣く泣くすべてpubにする
 pub struct Task {
-    pub context: Context,
+    pub context: crate::cpu::Context,
     pub queue: *mut TaskQueue,
     pub next: *mut Task,
     pub priority: Priority,
@@ -26,7 +26,7 @@ pub struct Task {
 #[macro_export]
 macro_rules! task_default {
     () => {
-        Task {
+        $crate::task::Task {
             context: context_default!(),
             queue: core::ptr::null_mut(),
             next: core::ptr::null_mut(),
@@ -34,8 +34,8 @@ macro_rules! task_default {
             task: None,
             exinf: 0,
             actcnt: 0,
-        }
-    };
+        };
+    }
 }
 
 // タスクキュー
@@ -43,10 +43,26 @@ pub struct TaskQueue {
     tail: *mut Task,
 }
 
+#[macro_export]
+macro_rules! task_queue_default {
+    () => {
+        TaskQueue {
+            tail: core::ptr::null_mut(),
+        }
+    };
+}
+
 static mut CURRENT_TASK: *mut Task = ptr::null_mut();
 static mut READY_QUEUE: TaskQueue = TaskQueue {
     tail: ptr::null_mut(),
 };
+
+
+pub (crate) unsafe fn detach_ready_queue() -> Option<&'static mut Task> {
+    set_dispatch_reserve_flag();
+    READY_QUEUE.pop_front()
+}
+
 
 /*
 fn current_task() -> & mut Task {
@@ -145,9 +161,13 @@ impl Task {
             self.actcnt += 1;
             if self.queue == ptr::null_mut() {
                 READY_QUEUE.insert_priority_order(self);
-                _kernel_set_dispatch_pending(true);
+                set_dispatch_reserve_flag();
             }
         }
+    }
+
+    pub (crate) unsafe fn attach_ready_queue(&mut self) {
+        READY_QUEUE.insert_priority_order(self);
     }
 
     fn remove_queue(&mut self) {
