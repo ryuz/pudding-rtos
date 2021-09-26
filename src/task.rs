@@ -40,7 +40,7 @@ macro_rules! task_default {
 
 // タスクキュー
 pub struct TaskQueue {
-    tail: *mut Task,
+    pub tail: *mut Task,
 }
 
 #[macro_export]
