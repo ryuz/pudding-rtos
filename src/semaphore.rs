@@ -13,6 +13,7 @@ pub struct Semaphore {
     pub count: SemCount,
 }
 
+/*
 // static初期化時に中身を知らなくてよいようにマクロで補助
 #[macro_export]
 macro_rules! semaphore_default {
@@ -29,8 +30,16 @@ macro_rules! semaphore_default {
         }
     };
 }
+*/
 
 impl Semaphore {
+    pub const fn new(init_count: SemCount) -> Self {
+        Semaphore {
+            queue: TaskQueue::new(),
+            count: init_count,
+        }
+    }
+    
     pub fn wait(&mut self) {
         unsafe {
             let _sc = SystemCall::new();

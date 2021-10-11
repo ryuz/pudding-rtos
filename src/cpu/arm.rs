@@ -10,11 +10,10 @@ pub struct Context {
     pub sp: usize,
 }
 
-#[macro_export]
-macro_rules! context_default {
-    () => {
-        $crate::cpu::arm::Context { sp: 0 }
-    };
+impl Context {
+    pub const fn new() -> Self {
+        Context{ sp: 0 }
+    }
 }
 
 

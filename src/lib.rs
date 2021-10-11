@@ -1,6 +1,6 @@
 #![no_std]
 #![feature(asm)]
-
+#![feature(const_fn_fn_ptr_basics)]
 
 #[macro_use]
 pub mod cpu;
