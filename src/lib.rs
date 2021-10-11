@@ -6,3 +6,5 @@
 pub mod arm;
 pub mod cdns;
 pub mod generic;
+
+pub mod fifo;
