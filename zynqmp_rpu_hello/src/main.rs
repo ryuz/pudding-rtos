@@ -39,10 +39,10 @@ static mut STACK_INT: [isize; 512] = [0; 512];
 
 static mut STACK0: [isize; 512] = [0; 512];
 static mut STACK1: [isize; 512] = [0; 512];
-static mut TASK0: Task = task_default!();
-static mut TASK1: Task = task_default!();
+static mut TASK0: Task = Task::new();
+static mut TASK1: Task = Task::new();
 
-static mut SEM0: Semaphore = semaphore_default!();
+static mut SEM0: Semaphore = Semaphore::new(0);
 
 // main
 #[no_mangle]

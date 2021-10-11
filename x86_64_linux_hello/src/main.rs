@@ -7,10 +7,10 @@ use jelly_kernel as kernel;
 use kernel::*;
 
 static mut STACK0: [isize; 256] = [0; 256];
-static mut TASK0: Task = task_default!();
+static mut TASK0: Task = Task::new();
 
 static mut STACK1: [isize; 256] = [0; 256];
-static mut TASK1: Task = task_default!();
+static mut TASK1: Task = Task::new();
 
 
 fn main() {

@@ -22,35 +22,12 @@ pub struct Task {
     pub actcnt: ActCount,
 }
 
-// static初期化時に中身を知らなくてよいようにマクロで補助
-#[macro_export]
-macro_rules! task_default {
-    () => {
-        $crate::task::Task {
-            context: context_default!(),
-            queue: core::ptr::null_mut(),
-            next: core::ptr::null_mut(),
-            priority: 0,
-            task: None,
-            exinf: 0,
-            actcnt: 0,
-        };
-    }
-}
 
 // タスクキュー
 pub struct TaskQueue {
     pub tail: *mut Task,
 }
 
-#[macro_export]
-macro_rules! task_queue_default {
-    () => {
-        TaskQueue {
-            tail: core::ptr::null_mut(),
-        }
-    };
-}
 
 static mut CURRENT_TASK: *mut Task = ptr::null_mut();
 static mut READY_QUEUE: TaskQueue = TaskQueue {
@@ -90,6 +67,19 @@ pub (crate) unsafe fn task_switch() {
 }
 
 impl Task {
+    /// インスタンス生成
+    pub const fn new() -> Self {
+        Task {
+        context: Context::new(),
+        queue: core::ptr::null_mut(),
+        next: core::ptr::null_mut(),
+        priority: 0,
+        task: None,
+        exinf: 0,
+        actcnt: 0,
+        }
+    }
+
     /// タスク生成
     pub fn create(
         &mut self,
@@ -179,7 +169,7 @@ impl Task {
 }
 
 impl TaskQueue {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         TaskQueue {
             tail: ptr::null_mut(),
         }
