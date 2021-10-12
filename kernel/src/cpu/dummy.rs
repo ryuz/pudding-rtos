@@ -1,5 +1,3 @@
-
-
 #[repr(C)]
 pub struct Context {
     pub sp: usize,
@@ -7,10 +5,9 @@ pub struct Context {
 
 impl Context {
     pub const fn new() -> Self {
-        Context{ sp: 0 }
+        Context { sp: 0 }
     }
 }
-
 
 pub unsafe fn interrupt_initialize(_stack: &mut [isize]) {}
 
@@ -21,12 +18,6 @@ pub unsafe fn cpu_lock() {}
 pub unsafe fn cpu_unlock() {}
 
 pub unsafe fn cpu_halt() {}
-
-
-
-
-
-
 
 #[no_mangle]
 pub extern "C" fn _kernel_context_create(
@@ -41,8 +32,4 @@ pub extern "C" fn _kernel_context_create(
 pub extern "C" fn _kernel_context_start(_ctxcb_new: *mut Context) {}
 
 #[no_mangle]
-pub extern "C" fn _kernel_context_switch(
-    _ctxcb_new: *mut Context,
-    _ctxcb_now: *mut Context,
-) {
-}
+pub extern "C" fn _kernel_context_switch(_ctxcb_new: *mut Context, _ctxcb_now: *mut Context) {}

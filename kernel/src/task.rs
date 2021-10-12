@@ -1,82 +1,60 @@
 #![allow(dead_code)]
 
-use crate::cpu::*;
 use crate::context::*;
+use crate::cpu::*;
+use crate::queue::*;
 use crate::system::*;
 use core::ptr;
-
 
 pub type Priority = i8;
 pub type ActCount = u8;
 
+pub type TaskQueue = Queue<Task>;
 
 // Task control block
 // static初期化の為に泣く泣くすべてpubにする
 pub struct Task {
-    pub context: crate::cpu::Context,
-    pub queue: *mut TaskQueue,
-    pub next: *mut Task,
-    pub priority: Priority,
-    pub task: Option<fn(isize)>,
-    pub exinf: isize,
-    pub actcnt: ActCount,
+    context: crate::cpu::Context,
+    queue: *mut TaskQueue,
+    next: *mut Task,
+    priority: Priority,
+    task: Option<fn(isize)>,
+    exinf: isize,
+    actcnt: ActCount,
 }
 
+impl QueueObject<Task> for Task {
+    fn get_next(&self) -> *mut Task {
+        self.next
+    }
+    fn set_next(&mut self, next: *mut Task) {
+        self.next = next;
+    }
+    fn get_priority(&self) -> i32 {
+        self.priority as i32
+    }
+    fn get_queue(&self) -> *mut Queue<Task> {
+        self.queue
+    }
 
-// タスクキュー
-pub struct TaskQueue {
-    pub tail: *mut Task,
-}
+    fn set_queue(&mut self, que: *mut Queue<Task>) {
+        self.queue = que;
+    }
 
-
-static mut CURRENT_TASK: *mut Task = ptr::null_mut();
-static mut READY_QUEUE: TaskQueue = TaskQueue {
-    tail: ptr::null_mut(),
-};
-
-
-pub (crate) unsafe fn detach_ready_queue() -> Option<&'static mut Task> {
-    set_dispatch_reserve_flag();
-    READY_QUEUE.pop_front()
-}
-
-
-/*
-fn current_task() -> & mut Task {
-    unsafe { &mut *CURRENT_TASK }
-}
-
-fn task_eq(task0: &Task, task1: &Task) -> bool {
-    let ptr0 = task0 as *const Task;
-    let ptr1 = task1 as *const Task;
-    ptr0 == ptr1
-}
-*/
-
-pub (crate) unsafe fn task_switch() {
-    let head = READY_QUEUE.front();
-    match head {
-        None => {
-            CURRENT_TASK = ptr::null_mut();
-            context_switch_to_system();
-        }
-        Some(task) => {
-            task.switch();
-        }
-    };
+    fn queue_dropped(&mut self) {}
 }
 
 impl Task {
     /// インスタンス生成
     pub const fn new() -> Self {
         Task {
-        context: Context::new(),
-        queue: core::ptr::null_mut(),
-        next: core::ptr::null_mut(),
-        priority: 0,
-        task: None,
-        exinf: 0,
-        actcnt: 0,
+            context: Context::new(),
+            queue: core::ptr::null_mut(),
+            next: core::ptr::null_mut(),
+            priority: 0,
+            task: None,
+            exinf: 0,
+            actcnt: 0,
         }
     }
 
@@ -99,7 +77,7 @@ impl Task {
                         (task.task.unwrap())(task.exinf);
                         cpu_lock();
                     }
-                    task.remove_queue();
+                    task.remove_from_queue();
                     task_switch()
                 }
             }
@@ -112,7 +90,34 @@ impl Task {
         let task_ptr = self as *mut Task;
         self.context.create(stack, task_entry, task_ptr as isize);
     }
-    
+
+    /*
+    pub(crate) fn add_to_queue_in_priority_order(&mut self, que: &mut TaskQueue) {
+        assert_eq!(self.queue, ptr::null_mut());
+        que.insert_priority_order(self);
+        self.queue = que as *mut TaskQueue;
+    }
+
+    pub(crate) fn add_to_queue_in_fifo_order(&mut self, que: &mut TaskQueue) {
+        que.push_back(self);
+        self.queue = que as *mut TaskQueue;
+    }
+    */
+
+    pub(crate) fn remove_from_queue(&mut self) {
+        if self.queue != ptr::null_mut() {
+            let que = unsafe { &mut *self.queue };
+            que.remove(self);
+            self.queue = ptr::null_mut();
+        }
+    }
+
+    pub(crate) fn attach_ready_queue(&mut self) {
+        unsafe {
+            READY_QUEUE.insert_priority_order(self);
+        }
+    }
+
     /*
     fn is_current(&self) -> bool {
         self.context.is_current()
@@ -150,24 +155,36 @@ impl Task {
             let _sc = SystemCall::new();
             self.actcnt += 1;
             if self.queue == ptr::null_mut() {
-                READY_QUEUE.insert_priority_order(self);
+                //              READY_QUEUE.insert_priority_order(self);
+                self.attach_ready_queue();
                 set_dispatch_reserve_flag();
             }
         }
     }
-
-    pub (crate) unsafe fn attach_ready_queue(&mut self) {
-        READY_QUEUE.insert_priority_order(self);
-    }
-
-    fn remove_queue(&mut self) {
-        if self.queue != ptr::null_mut() {
-            let que = unsafe { &mut *self.queue };
-            que.remove(self);
-        }
-    }
 }
 
+static mut CURRENT_TASK: *mut Task = ptr::null_mut();
+static mut READY_QUEUE: TaskQueue = TaskQueue::new();
+
+pub(crate) unsafe fn detach_ready_queue() -> Option<&'static mut Task> {
+    set_dispatch_reserve_flag();
+    READY_QUEUE.pop_front()
+}
+
+pub(crate) unsafe fn task_switch() {
+    let head = READY_QUEUE.front();
+    match head {
+        None => {
+            CURRENT_TASK = ptr::null_mut();
+            context_switch_to_system();
+        }
+        Some(task) => {
+            task.switch();
+        }
+    };
+}
+
+/*
 impl TaskQueue {
     pub const fn new() -> Self {
         TaskQueue {
@@ -443,3 +460,4 @@ mod tests {
     fn task1(_exinf: isize) {}
     fn task2(_exinf: isize) {}
 }
+*/

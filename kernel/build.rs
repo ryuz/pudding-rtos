@@ -73,8 +73,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         // ライブラリパス追加
-//        let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
-//        println!("cargo:rustc-link-search={}", out_dir.display());
+        //        let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
+        //        println!("cargo:rustc-link-search={}", out_dir.display());
 
         // リンカスクリプトををビルドディレクトリに
         //  File::create(out_dir.join("link.lds"))?.write_all(include_bytes!("link.lds"))?;

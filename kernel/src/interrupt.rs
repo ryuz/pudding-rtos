@@ -1,15 +1,9 @@
-
-
-
-use crate::*;
 use crate::system::*;
+use crate::*;
 
-
-pub unsafe fn initialize(stack: &mut [isize])
-{
+pub unsafe fn initialize(stack: &mut [isize]) {
     cpu::interrupt_initialize(stack);
 }
-
 
 // 割り込みコンテキストに移行
 #[no_mangle]
@@ -32,4 +26,3 @@ pub unsafe extern "C" fn _kernel_interrupt_end() {
         task_switch();
     }
 }
-

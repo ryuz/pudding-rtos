@@ -22,20 +22,20 @@ extern "C" {
 static mut SYSTEM_CONTEXT: Context = Context::new(); // context_default!();
 static mut CURRENT_CONTEXT: *mut Context = ptr::null_mut();
 
-pub (crate) unsafe fn context_switch_to_system() {
+pub(crate) unsafe fn context_switch_to_system() {
     SYSTEM_CONTEXT.switch();
 }
 
-pub (crate) fn context_initialize() {
+pub(crate) fn context_initialize() {
     unsafe {
         CURRENT_CONTEXT = &mut SYSTEM_CONTEXT as *mut Context;
     }
 }
 
 impl Context {
-//    pub const fn new() -> Self {
-//        Context { sp: 0 }
-//    }
+    //    pub const fn new() -> Self {
+    //        Context { sp: 0 }
+    //    }
 
     pub fn create(&mut self, stack: &mut [isize], entry: extern "C" fn(isize), exinf: isize) {
         let isp = (&stack[0] as *const isize as usize) + stack.len() * size_of::<isize>();
@@ -43,7 +43,7 @@ impl Context {
             _kernel_context_create(self, isp as usize, entry, exinf);
         }
     }
-    
+
     pub fn switch(&mut self) {
         unsafe {
             let cur_ctx = CURRENT_CONTEXT;
