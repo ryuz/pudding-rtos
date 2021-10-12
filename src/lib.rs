@@ -1,52 +1,47 @@
 #![no_std]
 #![feature(asm)]
+#![feature(const_fn_trait_bound)]
 #![feature(const_fn_fn_ptr_basics)]
 
-#[macro_use]
 pub mod cpu;
 pub use cpu::*;
 
-#[macro_use]
 pub mod context;
-
 pub mod system;
 
-pub mod irc;
 pub mod interrupt;
+pub mod irc;
 
+mod queue;
 
-#[macro_use]
 pub mod task;
 pub use task::*;
 
-#[macro_use]
 pub mod semaphore;
 pub use semaphore::*;
-
-
 
 pub unsafe fn initialize() {
     cpu::cpu_initialize();
     context::context_initialize();
 }
 
+// 以下、デバッグ用の暫定
 
 static mut DEBUG_PRINT: Option<fn(str: &str)> = None;
 
-pub fn set_debug_print(fnc: Option<fn(str: &str)>)
-{
+pub fn set_debug_print(fnc: Option<fn(str: &str)>) {
     unsafe {
         DEBUG_PRINT = fnc;
     }
 }
 
-pub fn debug_print(str: &str)
-{
+pub fn debug_print(str: &str) {
     unsafe {
         match DEBUG_PRINT {
-            Some(print) => { print(str); },
+            Some(print) => {
+                print(str);
+            }
             None => (),
         }
     }
 }
-

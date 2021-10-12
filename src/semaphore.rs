@@ -1,10 +1,7 @@
-
-
 use crate::system::*;
 use crate::task::*;
 
 pub type SemCount = i32;
-
 
 // Task control block
 // static初期化の為に泣く泣くすべてpubにする
@@ -39,14 +36,13 @@ impl Semaphore {
             count: init_count,
         }
     }
-    
+
     pub fn wait(&mut self) {
         unsafe {
             let _sc = SystemCall::new();
             if self.count > 0 {
                 self.count -= 1;
-            }
-            else {
+            } else {
                 let task = detach_ready_queue().unwrap();
                 self.queue.insert_priority_order(task);
                 set_dispatch_reserve_flag();
@@ -70,4 +66,3 @@ impl Semaphore {
         }
     }
 }
-

@@ -4,7 +4,6 @@ pub use jelly_pac::arm::cpu;
 pub use jelly_pac::arm::mpu;
 pub use jelly_pac::arm::vfp;
 
-
 #[repr(C)]
 pub struct Context {
     pub sp: usize,
@@ -12,10 +11,9 @@ pub struct Context {
 
 impl Context {
     pub const fn new() -> Self {
-        Context{ sp: 0 }
+        Context { sp: 0 }
     }
 }
-
 
 #[repr(C)]
 struct CpuControlBlock {
@@ -31,18 +29,14 @@ static mut _KERNEL_CPU_CB: CpuControlBlock = CpuControlBlock {
     isp: 0,
 };
 
+pub(crate) unsafe fn cpu_initialize() {}
 
-pub (crate) unsafe fn cpu_initialize() {
-}
-
-
-pub (crate) unsafe fn interrupt_initialize(stack: &mut [isize]) {
+pub(crate) unsafe fn interrupt_initialize(stack: &mut [isize]) {
     let isp = (&stack[0] as *const isize as usize) + stack.len() * core::mem::size_of::<isize>();
     _KERNEL_CPU_CB.isp = isp as u32;
 }
 
-
-pub (crate) unsafe fn cpu_lock() {
+pub(crate) unsafe fn cpu_lock() {
     asm!(
         r#"
             mrs     r0, cpsr                    /* cpsr取得 */
@@ -52,7 +46,7 @@ pub (crate) unsafe fn cpu_lock() {
     );
 }
 
-pub (crate) unsafe fn cpu_unlock() {
+pub(crate) unsafe fn cpu_unlock() {
     let imask = _KERNEL_CPU_CB.imask;
     asm!(
         r#"
@@ -65,10 +59,8 @@ pub (crate) unsafe fn cpu_unlock() {
     );
 }
 
-
-pub (crate) unsafe fn cpu_halt() -> ! {
+pub(crate) unsafe fn cpu_halt() -> ! {
     loop {
         asm!("wfi");
     }
 }
-
