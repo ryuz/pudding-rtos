@@ -15,3 +15,18 @@ pub unsafe fn enable_vfp() {
         "#
     );
 }
+
+
+pub unsafe fn vsqrt_f32(v: f32) ->f32 {
+    let mut q: f32;
+    asm!(
+        r#"
+                vmov.32     s0, {1}
+                vsqrt.f32   s0, s0
+                vmov.32     {0}, s0
+        "#,
+        out(reg) q,
+        in(reg) v,
+    );
+    q
+}
