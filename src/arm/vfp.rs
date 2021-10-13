@@ -17,16 +17,60 @@ pub unsafe fn enable_vfp() {
 }
 
 
-pub unsafe fn vsqrt_f32(v: f32) ->f32 {
-    let mut q: f32;
-    asm!(
-        r#"
-                vmov.32     s0, {1}
-                vsqrt.f32   s0, s0
-                vmov.32     {0}, s0
-        "#,
-        out(reg) q,
-        in(reg) v,
-    );
-    q
+pub fn vabs_f32(v: f32) ->f32 {
+    unsafe {
+        let mut q: f32;
+        asm!(
+            r#"
+                    vabs.f32    {0}, {1}
+            "#,
+            out(sreg) q,
+            in(sreg) v,
+        );
+        q
+    }
 }
+
+pub fn vabs_f64(v: f64) ->f64 {
+    unsafe {
+        let mut q: f64;
+        asm!(
+            r#"
+                    vabs.f64    {0}, {1}
+            "#,
+            out(dreg) q,
+            in(dreg) v,
+        );
+        q
+    }
+}
+
+
+pub fn vsqrt_f32(v: f32) ->f32 {
+    unsafe {
+        let mut q: f32;
+        asm!(
+            r#"
+                    vsqrt.f32   {0}, {1}
+            "#,
+            out(sreg) q,
+            in(sreg) v,
+        );
+        q
+    }
+}
+
+pub fn vsqrt_f64(v: f64) ->f64 {
+    unsafe {
+        let mut q: f64;
+        asm!(
+            r#"
+                    vsqrt.f64   {0}, {1}
+            "#,
+            out(dreg) q,
+            in(dreg) v,
+        );
+        q
+    }
+}
+
