@@ -9,7 +9,7 @@ use core::ptr;
 pub type Priority = i8;
 pub type ActCount = u8;
 
-pub type TaskQueue = Queue<Task>;
+pub type TaskQueue = Queue<Task, Priority>;
 
 // Task control block
 // static初期化の為に泣く泣くすべてpubにする
@@ -23,21 +23,21 @@ pub struct Task {
     actcnt: ActCount,
 }
 
-impl QueueObject<Task> for Task {
-    fn get_next(&self) -> *mut Task {
+impl QueueObject<Task, Priority> for Task {
+    fn next(&self) -> *mut Task {
         self.next
     }
     fn set_next(&mut self, next: *mut Task) {
         self.next = next;
     }
-    fn get_priority(&self) -> i32 {
-        self.priority as i32
+    fn priority(&self) -> Priority {
+        self.priority
     }
-    fn get_queue(&self) -> *mut Queue<Task> {
+    fn queue(&self) -> *mut TaskQueue {
         self.queue
     }
 
-    fn set_queue(&mut self, que: *mut Queue<Task>) {
+    fn set_queue(&mut self, que: *mut TaskQueue) {
         self.queue = que;
     }
 

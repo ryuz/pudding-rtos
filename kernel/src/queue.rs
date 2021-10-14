@@ -1,43 +1,50 @@
 #![allow(dead_code)]
 
 use core::ptr;
+use num::Integer;
+use core::marker::PhantomData;
 
-pub trait QueueObject<T>
+pub trait QueueObject<OBJ, PRI>
 where
-    T: QueueObject<T>,
+    OBJ: QueueObject<OBJ, PRI>,
+    PRI: Integer,
 {
-    fn get_next(&self) -> *mut T;
-    fn set_next(&mut self, next: *mut T);
-    fn get_priority(&self) -> i32;
-    fn get_queue(&self) -> *mut Queue<T>;
-    fn set_queue(&mut self, que: *mut Queue<T>);
+    fn priority(&self) -> PRI;
+    fn queue(&self) -> *mut Queue<OBJ, PRI>;
+    fn set_queue(&mut self, que: *mut Queue<OBJ, PRI>);
+    fn next(&self) -> *mut OBJ;
+    fn set_next(&mut self, next: *mut OBJ);
     fn queue_dropped(&mut self);
 }
 
-pub struct Queue<T>
+pub struct Queue<OBJ, PRI>
 where
-    T: QueueObject<T>,
+    OBJ: QueueObject<OBJ, PRI>,
+    PRI: Integer,
 {
-    tail: *mut T,
+    tail: *mut OBJ,
+    _marker: PhantomData<PRI>,
 }
 
-impl<T> Queue<T>
+impl<OBJ, PRI> Queue<OBJ, PRI>
 where
-    T: QueueObject<T>,
+    OBJ: QueueObject<OBJ, PRI>,
+    PRI: Integer,
 {
     pub const fn new() -> Self {
-        Queue::<T> {
+        Queue::<OBJ, PRI> {
             tail: ptr::null_mut(),
+            _marker: PhantomData,
         }
     }
 
     /// 優先度順で追加
-    pub fn insert_priority_order(&mut self, obj: &mut T) {
-        debug_assert_eq!(obj.get_queue(), ptr::null_mut());
+    pub fn insert_priority_order(&mut self, obj: &mut OBJ) {
+        debug_assert_eq!(obj.queue(), ptr::null_mut());
         obj.set_queue(self as *mut Self);
 
         // 生ポインタ化
-        let ptr: *mut T = obj as *mut T;
+        let ptr: *mut OBJ = obj as *mut OBJ;
 
         if self.tail == ptr::null_mut() {
             // キューにタスクが無ければ先頭に設定
@@ -46,14 +53,14 @@ where
         } else {
             // キューが空でないなら挿入位置を探索
             // タスク優先度を取得
-            let pri = obj.get_priority();
+            let pri = obj.priority();
 
             // 先頭から探索
             let mut prev = self.tail;
-            let mut next = unsafe { &*prev }.get_next();
+            let mut next = unsafe { &*prev }.next();
             loop {
                 // 優先度取り出し
-                let next_pri = unsafe { &*next }.get_priority();
+                let next_pri = unsafe { &*next }.priority();
 
                 if next_pri > pri {
                     break;
@@ -61,7 +68,7 @@ where
 
                 // 次を探す
                 prev = next;
-                next = unsafe { &*prev }.get_next();
+                next = unsafe { &*prev }.next();
 
                 // 末尾なら抜ける
                 if prev == self.tail {
@@ -77,12 +84,12 @@ where
     }
 
     /// FIFO順で追加
-    pub fn push_back(&mut self, obj: &mut T) {
-        debug_assert_eq!(obj.get_queue(), ptr::null_mut());
+    pub fn push_back(&mut self, obj: &mut OBJ) {
+        debug_assert_eq!(obj.queue(), ptr::null_mut());
         obj.set_queue(self as *mut Self);
 
         // 生ポインタ化
-        let ptr = obj as *mut T;
+        let ptr = obj as *mut OBJ;
 
         if self.tail == ptr::null_mut() {
             // キューにタスクが無ければ先頭に設定
@@ -90,33 +97,33 @@ where
         } else {
             // キューが空でないなら末尾に追加
             let tail_obj = unsafe { &mut *self.tail };
-            obj.set_next(tail_obj.get_next());
+            obj.set_next(tail_obj.next());
             tail_obj.set_next(ptr);
         }
         self.tail = ptr;
     }
 
     /// 先頭を参照
-    pub fn front(&mut self) -> Option<&mut T> {
+    pub fn front(&mut self) -> Option<&mut OBJ> {
         if self.tail == ptr::null_mut() {
             None
         } else {
             let obj = unsafe { &mut *self.tail };
-            Some(unsafe { &mut *obj.get_next() })
+            Some(unsafe { &mut *obj.next() })
         }
     }
 
     /// 先頭を取り出し
-    pub fn pop_front<'a, 'b>(&'a mut self) -> Option<&'b mut T> {
+    pub fn pop_front<'a, 'b>(&'a mut self) -> Option<&'b mut OBJ> {
         if self.tail == ptr::null_mut() {
             None
         } else {
             let obj_tail = unsafe { &mut *self.tail };
-            let obj_head = unsafe { &mut *obj_tail.get_next() };
-            if self.tail == obj_tail.get_next() {
+            let obj_head = unsafe { &mut *obj_tail.next() };
+            if self.tail == obj_tail.next() {
                 self.tail = ptr::null_mut();
             } else {
-                obj_tail.set_next(obj_head.get_next());
+                obj_tail.set_next(obj_head.next());
             }
             obj_head.set_queue(ptr::null_mut());
             Some(obj_head)
@@ -126,24 +133,24 @@ where
     // 接続位置で時間が変わるので注意
     // 先頭しか外さない or タスク数を制約するなどで時間保証可能
     // 双方向リストする手はあるので、大量タスクを扱うケースが出たら考える
-    pub fn remove(&mut self, obj: &mut T) {
-        debug_assert_eq!(obj.get_queue(), self as *mut Self);
+    pub fn remove(&mut self, obj: &mut OBJ) {
+        debug_assert_eq!(obj.queue(), self as *mut Self);
 
         // 生ポインタ化
-        let ptr = obj as *mut T;
+        let ptr = obj as *mut OBJ;
 
         // 接続位置を探索
-        if obj.get_next() == ptr {
+        if obj.next() == ptr {
             /* last one */
             self.tail = ptr::null_mut();
         } else {
             let mut prev_ptr = self.tail;
             let mut prev_obj = unsafe { &mut *prev_ptr };
-            while prev_obj.get_next() != ptr {
-                prev_ptr = prev_obj.get_next();
+            while prev_obj.next() != ptr {
+                prev_ptr = prev_obj.next();
                 prev_obj = unsafe { &mut *prev_ptr };
             }
-            prev_obj.set_next(obj.get_next());
+            prev_obj.set_next(obj.next());
             if self.tail == ptr {
                 self.tail = prev_ptr;
             }
@@ -155,9 +162,10 @@ where
     }
 }
 
-impl<T> Drop for Queue<T>
+impl<OBJ, PRI> Drop for Queue<OBJ, PRI>
 where
-    T: QueueObject<T>,
+    OBJ: QueueObject<OBJ, PRI>,
+    PRI: Integer,
 {
     fn drop(&mut self) {
         // 残っているオブジェクトがあれば削除されたことを知らせる
@@ -188,16 +196,16 @@ mod tests {
     }
 
     impl QueueObject<TestObject> for TestObject {
-        fn get_next(&self) -> *mut TestObject {
+        fn next(&self) -> *mut TestObject {
             self.next
         }
         fn set_next(&mut self, next: *mut TestObject) {
             self.next = next;
         }
-        fn get_priority(&self) -> i32 {
+        fn priority(&self) -> i32 {
             self.id
         }
-        fn get_queue(&self) -> *mut Queue<TestObject> {
+        fn queue(&self) -> *mut Queue<TestObject> {
             self.que
         }
 
