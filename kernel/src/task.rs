@@ -37,7 +37,7 @@ impl Timeout {
 // Task control block
 // static初期化の為に泣く泣くすべてpubにする
 pub struct Task {
-    context: crate::cpu::Context,
+    context: crate::context::Context,
     queue: *mut TaskQueue,
     next: *mut Task,
     priority: Priority,

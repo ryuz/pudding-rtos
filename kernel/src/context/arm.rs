@@ -1,3 +1,8 @@
+#![allow(dead_code)]
+
+pub use jelly_pac::arm::cpu;
+pub use jelly_pac::arm::mpu;
+pub use jelly_pac::arm::vfp;
 
 
 extern "C" {
@@ -28,7 +33,7 @@ impl Context {
     }
 
     pub (crate) unsafe fn _create(&mut self, stack: &mut [u8], entry: extern "C" fn(isize), exinf: isize) {
-        let isp = (&mut stack[0] as *mut u8 as usize) + stack.len();
+        let isp = ((&mut stack[0] as *mut u8 as usize) + stack.len()) & 0xfffffff8;
         _kernel_context_create(self as  *mut Context, isp as usize, entry, exinf);
     }
 
@@ -42,13 +47,3 @@ impl Context {
     }
 }
 
-
-pub(crate) unsafe fn cpu_initialize() {}
-
-pub(crate) unsafe fn interrupt_initialize(_stack: &mut [u8]) {}
-
-pub(crate) unsafe fn cpu_lock() {}
-
-pub(crate) unsafe fn cpu_unlock() {}
-
-pub(crate) unsafe fn cpu_halt() {}
