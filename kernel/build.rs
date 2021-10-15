@@ -5,6 +5,7 @@ use std::{env, error::Error}; // , path::PathBuf};
 fn main() -> Result<(), Box<dyn Error>> {
     let target = env::var("TARGET").unwrap();
 
+    /*
     {
         use std::fs::File;
         use std::io::Write;
@@ -14,6 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         file.flush()?;
     }
+    */
 
     if target.contains("armv7r") {
         // ソースファイル
@@ -69,11 +71,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         // ソースファイル
         let src_files = vec![
             [
-                "src/context/x86_64/kernel_context_create.S",
+                "src/asm/x86_64/kernel_context_create.S",
                 "kernel_context_create",
             ],
             [
-                "src/context/x86_64/kernel_context_switch.S",
+                "src/asm/x86_64/kernel_context_switch.S",
                 "kernel_context_switch",
             ],
         ];
