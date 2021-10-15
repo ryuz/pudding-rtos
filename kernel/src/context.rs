@@ -2,24 +2,10 @@ use core::ptr;
 
 use crate::cpu::Context;
 
-extern "C" {
-    // コンテキスト生成
-    fn _kernel_context_create(
-        ctxcb: *mut Context,
-        isp: usize,
-        entry: extern "C" fn(isize),
-        exinf: isize,
-    );
-
-    // コンテキスト開始
-    fn _kernel_context_start(ctxcb_new: *mut Context);
-
-    // コンテキストスイッチ
-    fn _kernel_context_switch(ctxcb_next: *mut Context, ctxcb_current: *mut Context);
-}
 
 static mut SYSTEM_CONTEXT: Context = Context::new(); // context_default!();
 static mut CURRENT_CONTEXT: *mut Context = ptr::null_mut();
+
 
 pub(crate) unsafe fn context_switch_to_system() {
     SYSTEM_CONTEXT.switch();
@@ -32,22 +18,17 @@ pub(crate) fn context_initialize() {
 }
 
 impl Context {
-    //    pub const fn new() -> Self {
-    //        Context { sp: 0 }
-    //    }
-
-    pub fn create(&mut self, stack: &mut [u8], entry: extern "C" fn(isize), exinf: isize) {
-        let isp = (&mut stack[0] as *mut u8 as usize) + stack.len();
+    pub (crate) fn create(&mut self, stack: &mut [u8], entry: extern "C" fn(isize), exinf: isize) {
         unsafe {
-            _kernel_context_create(self, isp as usize, entry, exinf);
+            self._create(stack, entry, exinf);
         }
     }
 
-    pub fn switch(&mut self) {
+    pub (crate) fn switch(&mut self) {
         unsafe {
             let cur_ctx = CURRENT_CONTEXT;
             CURRENT_CONTEXT = self as *mut Context;
-            _kernel_context_switch(self, cur_ctx);
+            self._switch(&mut *cur_ctx);
         }
     }
 
