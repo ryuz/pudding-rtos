@@ -44,7 +44,7 @@ pub struct Task {
     task: Option<fn(isize)>,
     exinf: isize,
     actcnt: ActCount,
-    timeout : Timeout,
+    timeout : Timeout
 }
 
 impl PriorityObject<Task, Priority> for Task {
@@ -108,7 +108,7 @@ impl Task {
             task: None,
             exinf: 0,
             actcnt: 0,
-            timeout: Timeout::new(),
+            timeout: Timeout::new()
         }
     }
 
@@ -118,7 +118,7 @@ impl Task {
         exinf: isize,
         task: fn(isize),
         priority: Priority,
-        stack: &mut [isize],
+        stack: &mut [u8],
     ) {
         extern "C" fn task_entry(exinf: isize) {
             unsafe {

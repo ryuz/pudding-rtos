@@ -1,7 +1,7 @@
 use crate::system::*;
 use crate::*;
 
-pub unsafe fn initialize(stack: &mut [isize]) {
+pub unsafe fn initialize(stack: &mut [u8]) {
     cpu::interrupt_initialize(stack);
 }
 

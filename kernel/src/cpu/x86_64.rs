@@ -20,7 +20,7 @@ macro_rules! context_default {
 
 pub(crate) unsafe fn cpu_initialize() {}
 
-pub(crate) unsafe fn interrupt_initialize(_stack: &mut [isize]) {}
+pub(crate) unsafe fn interrupt_initialize(_stack: &mut [u8]) {}
 
 pub(crate) unsafe fn cpu_lock() {}
 

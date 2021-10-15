@@ -1,4 +1,3 @@
-use core::mem::size_of;
 use core::ptr;
 
 use crate::cpu::Context;
@@ -37,8 +36,8 @@ impl Context {
     //        Context { sp: 0 }
     //    }
 
-    pub fn create(&mut self, stack: &mut [isize], entry: extern "C" fn(isize), exinf: isize) {
-        let isp = (&stack[0] as *const isize as usize) + stack.len() * size_of::<isize>();
+    pub fn create(&mut self, stack: &mut [u8], entry: extern "C" fn(isize), exinf: isize) {
+        let isp = (&mut stack[0] as *mut u8 as usize) + stack.len();
         unsafe {
             _kernel_context_create(self, isp as usize, entry, exinf);
         }
