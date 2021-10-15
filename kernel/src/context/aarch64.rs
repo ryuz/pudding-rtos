@@ -29,7 +29,7 @@ impl Context {
     }
 
     pub (crate) unsafe fn _create(&mut self, stack: &mut [u8], entry: extern "C" fn(isize), exinf: isize) {
-        let isp = ((&mut stack[0] as *mut u8 as usize) + stack.len()) & 0xfffffff8;
+        let isp = ((&mut stack[0] as *mut u8 as usize) + stack.len()) & 0xfffffffffffffff0;
         _kernel_context_create(self as  *mut Context, isp as usize, entry, exinf);
     }
 
