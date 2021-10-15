@@ -2,14 +2,14 @@
 
 use crate::context::*;
 use crate::cpu::*;
-use crate::queue::*;
+use crate::priority_queue::*;
 use crate::system::*;
 use core::ptr;
 
 pub type Priority = i8;
 pub type ActCount = u8;
 
-pub type TaskQueue = Queue<Task, Priority>;
+pub type TaskQueue = PriorityQueue<Task, Priority>;
 
 // Task control block
 // static初期化の為に泣く泣くすべてpubにする
@@ -23,7 +23,7 @@ pub struct Task {
     actcnt: ActCount,
 }
 
-impl QueueObject<Task, Priority> for Task {
+impl PriorityObject<Task, Priority> for Task {
     fn next(&self) -> *mut Task {
         self.next
     }

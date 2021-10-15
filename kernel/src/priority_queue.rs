@@ -4,35 +4,35 @@ use core::ptr;
 use num::Integer;
 use core::marker::PhantomData;
 
-pub trait QueueObject<OBJ, PRI>
+pub trait PriorityObject<OBJ, PRI>
 where
-    OBJ: QueueObject<OBJ, PRI>,
+    OBJ: PriorityObject<OBJ, PRI>,
     PRI: Integer,
 {
     fn priority(&self) -> PRI;
-    fn queue(&self) -> *mut Queue<OBJ, PRI>;
-    fn set_queue(&mut self, que: *mut Queue<OBJ, PRI>);
+    fn queue(&self) -> *mut PriorityQueue<OBJ, PRI>;
+    fn set_queue(&mut self, que: *mut PriorityQueue<OBJ, PRI>);
     fn next(&self) -> *mut OBJ;
     fn set_next(&mut self, next: *mut OBJ);
     fn queue_dropped(&mut self);
 }
 
-pub struct Queue<OBJ, PRI>
+pub struct PriorityQueue<OBJ, PRI>
 where
-    OBJ: QueueObject<OBJ, PRI>,
+    OBJ: PriorityObject<OBJ, PRI>,
     PRI: Integer,
 {
     tail: *mut OBJ,
     _marker: PhantomData<PRI>,
 }
 
-impl<OBJ, PRI> Queue<OBJ, PRI>
+impl<OBJ, PRI> PriorityQueue<OBJ, PRI>
 where
-    OBJ: QueueObject<OBJ, PRI>,
+    OBJ: PriorityObject<OBJ, PRI>,
     PRI: Integer,
 {
     pub const fn new() -> Self {
-        Queue::<OBJ, PRI> {
+        PriorityQueue::<OBJ, PRI> {
             tail: ptr::null_mut(),
             _marker: PhantomData,
         }
@@ -162,9 +162,9 @@ where
     }
 }
 
-impl<OBJ, PRI> Drop for Queue<OBJ, PRI>
+impl<OBJ, PRI> Drop for PriorityQueue<OBJ, PRI>
 where
-    OBJ: QueueObject<OBJ, PRI>,
+    OBJ: PriorityObject<OBJ, PRI>,
     PRI: Integer,
 {
     fn drop(&mut self) {
@@ -182,7 +182,7 @@ mod tests {
     struct TestObject {
         id: i32,
         next: *mut TestObject,
-        que: *mut Queue<TestObject>,
+        que: *mut PriorityQueue<TestObject, i32>,
     }
 
     impl TestObject {
@@ -195,7 +195,7 @@ mod tests {
         }
     }
 
-    impl QueueObject<TestObject> for TestObject {
+    impl PriorityObject<TestObject, i32> for TestObject {
         fn next(&self) -> *mut TestObject {
             self.next
         }
@@ -205,11 +205,11 @@ mod tests {
         fn priority(&self) -> i32 {
             self.id
         }
-        fn queue(&self) -> *mut Queue<TestObject> {
+        fn queue(&self) -> *mut PriorityQueue<TestObject, i32> {
             self.que
         }
 
-        fn set_queue(&mut self, que: *mut Queue<TestObject>) {
+        fn set_queue(&mut self, que: *mut PriorityQueue<TestObject, i32>) {
             self.que = que;
         }
 
@@ -218,7 +218,7 @@ mod tests {
 
     #[test]
     fn test_queue() {
-        let mut que = Queue::<TestObject>::new();
+        let mut que = PriorityQueue::<TestObject, i32>::new();
         let mut obj0 = TestObject::new(0);
         let mut obj1 = TestObject::new(1);
         let mut obj2 = TestObject::new(2);
@@ -269,11 +269,11 @@ mod tests {
         {
             // 優先度順パターン1
             que.insert_priority_order(&mut obj0);
-            assert_eq!(que.front().unwrap().get_priority(), 0);
+            assert_eq!(que.front().unwrap().priority(), 0);
             que.insert_priority_order(&mut obj1);
-            assert_eq!(que.front().unwrap().get_priority(), 0);
+            assert_eq!(que.front().unwrap().priority(), 0);
             que.insert_priority_order(&mut obj2);
-            assert_eq!(que.front().unwrap().get_priority(), 0);
+            assert_eq!(que.front().unwrap().priority(), 0);
 
             let t0 = que.pop_front();
             let t1 = que.pop_front();
@@ -288,11 +288,11 @@ mod tests {
         {
             // 優先度順パターン2
             que.insert_priority_order(&mut obj2);
-            assert_eq!(que.front().unwrap().get_priority(), 2);
+            assert_eq!(que.front().unwrap().priority(), 2);
             que.insert_priority_order(&mut obj1);
-            assert_eq!(que.front().unwrap().get_priority(), 1);
+            assert_eq!(que.front().unwrap().priority(), 1);
             que.insert_priority_order(&mut obj0);
-            assert_eq!(que.front().unwrap().get_priority(), 0);
+            assert_eq!(que.front().unwrap().priority(), 0);
 
             let t0 = que.pop_front();
             let t1 = que.pop_front();
@@ -306,11 +306,11 @@ mod tests {
         {
             // 優先度順パターン3
             que.insert_priority_order(&mut obj1);
-            assert_eq!(que.front().unwrap().get_priority(), 1);
+            assert_eq!(que.front().unwrap().priority(), 1);
             que.insert_priority_order(&mut obj2);
-            assert_eq!(que.front().unwrap().get_priority(), 1);
+            assert_eq!(que.front().unwrap().priority(), 1);
             que.insert_priority_order(&mut obj0);
-            assert_eq!(que.front().unwrap().get_priority(), 0);
+            assert_eq!(que.front().unwrap().priority(), 0);
 
             let t0 = que.pop_front();
             let t1 = que.pop_front();
@@ -324,11 +324,11 @@ mod tests {
         {
             // 優先度順パターン4
             que.insert_priority_order(&mut obj2);
-            assert_eq!(que.front().unwrap().get_priority(), 2);
+            assert_eq!(que.front().unwrap().priority(), 2);
             que.insert_priority_order(&mut obj0);
-            assert_eq!(que.front().unwrap().get_priority(), 0);
+            assert_eq!(que.front().unwrap().priority(), 0);
             que.insert_priority_order(&mut obj1);
-            assert_eq!(que.front().unwrap().get_priority(), 0);
+            assert_eq!(que.front().unwrap().priority(), 0);
 
             let t0 = que.pop_front();
             let t1 = que.pop_front();
@@ -343,7 +343,7 @@ mod tests {
 
     #[test]
     fn test_queue_static() {
-        static mut QUE: Queue<TestObject> = Queue::<TestObject>::new();
+        static mut QUE: PriorityQueue<TestObject, i32> = PriorityQueue::<TestObject, i32>::new();
         static mut OBJ0: TestObject = TestObject::new(0);
         static mut OBJ1: TestObject = TestObject::new(1);
         static mut OBJ2: TestObject = TestObject::new(2);

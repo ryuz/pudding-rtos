@@ -12,7 +12,8 @@ pub mod system;
 pub mod interrupt;
 pub mod irc;
 
-mod queue;
+mod priority_queue;
+mod timeout_queue;
 
 pub mod task;
 pub use task::*;
