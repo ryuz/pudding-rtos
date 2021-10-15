@@ -31,9 +31,9 @@ static mut _KERNEL_CPU_CB: CpuControlBlock = CpuControlBlock {
 
 pub(crate) unsafe fn cpu_initialize() {}
 
-pub(crate) unsafe fn interrupt_initialize(stack: &mut [isize]) {
-    let isp = (&stack[0] as *const isize as usize) + stack.len() * core::mem::size_of::<isize>();
-    _KERNEL_CPU_CB.isp = isp as u32;
+pub(crate) unsafe fn interrupt_initialize(stack: &mut [u8]) {
+    let isp = (&mut stack[0] as *mut u8 as usize) + stack.len();
+    _KERNEL_CPU_CB.isp = (isp as u32) & 0xfffffff0;
 }
 
 pub(crate) unsafe fn cpu_lock() {
