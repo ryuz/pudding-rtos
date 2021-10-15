@@ -1,15 +1,18 @@
 #!/bin/bash -e
 
-cargo build
 
-TARGET=zynqmp_rpu_hello
-PROC=remoteproc0
+NAME=zynqmp_rpu_hello
 
-if grep -q running /sys/class/remoteproc/$PROC/state; then
-    sudo sh -c "echo stop > /sys/class/remoteproc/$PROC/state"
+PROC=remoteproc${1:-0}
+TARGET=${2:-debug}
+OPTION=${2:+--}$2
+
+cargo build ${OPTION}
+
+if grep -q running /sys/class/remoteproc/${PROC}/state; then
+    sudo sh -c "echo stop > /sys/class/remoteproc/${PROC}/state"
 fi
 
-sudo cp target/armv7r-none-eabi/debug/$TARGET /lib/firmware
-#sudo cp target/armv7r-none-eabi/release/$TARGET /lib/firmware
-sudo sh -c "echo $TARGET > /sys/class/remoteproc/$PROC/firmware"
-sudo sh -c "echo start > /sys/class/remoteproc/$PROC/state"
+sudo cp target/armv7r-none-eabi/${TARGET}/${NAME} /lib/firmware
+sudo sh -c "echo ${NAME} > /sys/class/remoteproc/${PROC}/firmware"
+sudo sh -c "echo start > /sys/class/remoteproc/${PROC}/state"
