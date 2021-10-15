@@ -4,17 +4,22 @@ use core::ptr;
 #[cfg(target_arch = "x86_64")]
 pub mod x86_64;
 #[cfg(target_arch = "x86_64")]
-pub use x86_64::*;
+pub use self::x86_64::*;
 
 #[cfg(target_arch = "arm")]
 pub mod arm;
 #[cfg(target_arch = "arm")]
-pub use arm::*;
+pub use self::arm::*;
 
-#[cfg(not(any(target_arch = "x86_64", target_arch = "arm")))]
+#[cfg(target_arch = "aarch64")]
+pub mod aarch64;
+#[cfg(target_arch = "aarch64")]
+pub use self::aarch64::*;
+
+#[cfg(not(any(target_arch = "x86_64", target_arch = "arm", target_arch = "aarch64")))]
 pub mod dummy;
-#[cfg(not(any(target_arch = "x86_64", target_arch = "arm")))]
-pub use dummy::*;
+#[cfg(not(any(target_arch = "x86_64", target_arch = "arm", target_arch = "aarch64")))]
+pub use self::dummy::*;
 
 
 static mut SYSTEM_CONTEXT: Context = Context::new();

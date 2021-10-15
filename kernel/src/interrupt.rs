@@ -23,6 +23,6 @@ pub unsafe extern "C" fn _kernel_interrupt_end() {
     clear_interrupt_flag();
     if test_dispatch_reserve_flag() && !test_dispatch_disable_flag() {
         clear_dispatch_reserve_flag();
-        task_switch();
+        task::task_switch();
     }
 }

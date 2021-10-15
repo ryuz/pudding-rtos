@@ -3,6 +3,7 @@
 use core::ptr;
 
 use crate::*;
+use crate::cpu::*;
 use crate::context::*;
 use crate::priority_queue::*;
 use crate::timeout_queue::*;
