@@ -3,6 +3,11 @@
 #![feature(const_fn_trait_bound)]
 #![feature(const_fn_fn_ptr_basics)]
 
+pub type Priority = i8;
+pub type RelTime = u32;
+pub type ActCount = u8;
+
+
 pub mod cpu;
 pub use cpu::*;
 
