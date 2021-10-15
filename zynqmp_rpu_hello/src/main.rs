@@ -35,10 +35,10 @@ mod memdump;
 use jelly_kernel as kernel;
 use kernel::*;
 
-static mut STACK_INT: [isize; 512] = [0; 512];
+static mut STACK_INT: [u8; 4096] = [0; 4096];
 
-static mut STACK0: [isize; 512] = [0; 512];
-static mut STACK1: [isize; 512] = [0; 512];
+static mut STACK0: [u8; 4096] = [0; 4096];
+static mut STACK1: [u8; 4096] = [0; 4096];
 static mut TASK0: Task = Task::new();
 static mut TASK1: Task = Task::new();
 

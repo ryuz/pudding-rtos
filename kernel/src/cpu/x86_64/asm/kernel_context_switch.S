@@ -19,6 +19,7 @@ _kernel_context_switch:
                 push    %r14
                 push    %r15
                 push    %rbx
+                push    %rbp
                 movq    %rsp, (%rsi)        /* スタックポインタ保存 */
         /* --- そのまま _asm_context_start に続ける */
 
@@ -31,6 +32,7 @@ _kernel_context_switch:
                 .global _kernel_context_start
 _kernel_context_start:
                 movq    (%rdi), %rsp        /* スタックポインタ復帰 */
+                pop     %rbp
                 pop     %rbx
                 pop     %r15
                 pop     %r14
