@@ -5,7 +5,6 @@ use std::{env, error::Error}; // , path::PathBuf};
 fn main() -> Result<(), Box<dyn Error>> {
     let target = env::var("TARGET").unwrap();
 
-    /*
     {
         use std::fs::File;
         use std::io::Write;
@@ -14,21 +13,21 @@ fn main() -> Result<(), Box<dyn Error>> {
             write!(file, "{}: {}\n", key, value)?;
         }
         file.flush()?;
-    }*/
+    }
 
     if target.contains("armv7r") {
         // ソースファイル
         let src_files = vec![
             [
-                "src/context/arm/kernel_context_create.S",
+                "src/asm/arm/kernel_context_create.S",
                 "kernel_context_create",
             ],
             [
-                "src/context/arm/kernel_context_switch.S",
+                "src/asm/arm/kernel_context_switch.S",
                 "kernel_context_switch",
             ],
             [
-                "src/context/arm/kernel_exception_irq.S",
+                "src/asm/arm/kernel_exception_irq.S",
                 "kernel_exception_irq",
             ],
         ];
@@ -41,6 +40,26 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .flag("-D_KERNEL_ARM_WITH_VFP")
                 .flag("-Wno-unused-parameter")
                 .flag("-Wno-missing-field-initializers")
+                .file(name[0])
+                .compile(name[1]);
+        }
+    }
+    
+    if target.contains("aarch64") {
+        // ソースファイル
+        let src_files = vec![
+            [
+                "src/asm/aarch64/kernel_context_create.S",
+                "kernel_context_create",
+            ],
+            [
+                "src/asm/aarch64/kernel_context_switch.S",
+                "kernel_context_switch",
+            ],
+        ];
+
+        for name in src_files.into_iter() {
+            Build::new()
                 .file(name[0])
                 .compile(name[1]);
         }
