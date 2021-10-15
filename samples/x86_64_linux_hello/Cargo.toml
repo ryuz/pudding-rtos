@@ -6,5 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-jelly-kernel = { path = "../kernel" }
+jelly-kernel = { path = "../../kernel" }
 aligned = "0.4.0"
