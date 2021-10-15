@@ -1,9 +1,26 @@
 use core::ptr;
 
-use crate::cpu::Context;
+
+#[cfg(target_arch = "x86_64")]
+#[macro_use]
+pub mod x86_64;
+#[cfg(target_arch = "x86_64")]
+pub use x86_64::*;
+
+#[cfg(target_arch = "arm")]
+#[macro_use]
+pub mod arm;
+#[cfg(target_arch = "arm")]
+pub use arm::*;
+
+#[cfg(not(any(target_arch = "x86_64", target_arch = "arm")))]
+#[macro_use]
+pub mod dummy;
+#[cfg(not(any(target_arch = "x86_64", target_arch = "arm")))]
+pub use dummy::*;
 
 
-static mut SYSTEM_CONTEXT: Context = Context::new(); // context_default!();
+static mut SYSTEM_CONTEXT: Context = Context::new();
 static mut CURRENT_CONTEXT: *mut Context = ptr::null_mut();
 
 
@@ -40,3 +57,4 @@ impl Context {
         }
     }
 }
+

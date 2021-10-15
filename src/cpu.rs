@@ -1,17 +1,17 @@
-#[cfg(target_arch = "x86_64")]
-#[macro_use]
+
+
+#[cfg(all(not(feature = "std"), target_arch = "x86_64"))]
 pub mod x86_64;
-#[cfg(target_arch = "x86_64")]
+#[cfg(all(not(feature = "std"), target_arch = "x86_64"))]
 pub use x86_64::*;
 
-#[cfg(target_arch = "arm")]
-#[macro_use]
+#[cfg(all(not(feature = "std"), target_arch = "arm"))]
 pub mod arm;
-#[cfg(target_arch = "arm")]
+#[cfg(all(not(feature = "std"), target_arch = "arm"))]
 pub use arm::*;
 
-#[cfg(not(any(target_arch = "x86_64", target_arch = "arm")))]
-#[macro_use]
+#[cfg(any(feature = "std", not(any(target_arch = "x86_64", target_arch = "arm"))))]
 pub mod dummy;
-#[cfg(not(any(target_arch = "x86_64", target_arch = "arm")))]
+#[cfg(any(feature = "std", not(any(target_arch = "x86_64", target_arch = "arm"))))]
 pub use dummy::*;
+
