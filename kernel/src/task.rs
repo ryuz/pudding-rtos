@@ -1,15 +1,38 @@
 #![allow(dead_code)]
 
-use crate::context::*;
-use crate::cpu::*;
-use crate::priority_queue::*;
-use crate::system::*;
 use core::ptr;
 
-pub type Priority = i8;
-pub type ActCount = u8;
+use crate::*;
+use crate::context::*;
+use crate::priority_queue::*;
+use crate::timeout_queue::*;
+use crate::system::*;
+
 
 pub type TaskQueue = PriorityQueue<Task, Priority>;
+//pub type TimeQueue = TimeoutQueue<Task, RelTime>;
+
+
+static mut CURRENT_TASK: *mut Task = ptr::null_mut();
+static mut READY_QUEUE: TaskQueue = TaskQueue::new();
+//static mut TIME_QUEUE:  TimeQueue = TimeQueue::new();
+
+
+struct Timeout {
+    difftim : RelTime,
+    next: *mut Task,
+    prev: *mut Task,
+}
+
+impl Timeout {
+    const fn new() -> Self {
+        Timeout{
+            difftim:0,
+            next: ptr::null_mut(),
+            prev: ptr::null_mut(),
+         }
+    }
+}
 
 // Task control block
 // static初期化の為に泣く泣くすべてpubにする
@@ -21,6 +44,7 @@ pub struct Task {
     task: Option<fn(isize)>,
     exinf: isize,
     actcnt: ActCount,
+    timeout : Timeout,
 }
 
 impl PriorityObject<Task, Priority> for Task {
@@ -44,6 +68,35 @@ impl PriorityObject<Task, Priority> for Task {
     fn queue_dropped(&mut self) {}
 }
 
+
+impl TimeoutObject<Task, RelTime> for Task {
+    fn difftim(&self) -> RelTime{
+        self.timeout.difftim
+    }
+    fn set_difftim(&mut self, difftim: RelTime) {
+        self.timeout.difftim = difftim;
+    }
+
+    fn next(&self) -> *mut Task {
+        self.timeout.next
+    }
+    fn set_next(&mut self, next: *mut Task) {
+        self.timeout.next = next;
+    }
+
+    fn prev(&self) -> *mut Task {
+        self.timeout.prev
+    }        
+    fn set_prev(&mut self, prev: *mut Task) {
+        self.timeout.prev = prev;
+    }
+
+    fn timeout(&mut self) {}
+
+    fn queue_dropped(&mut self) {}
+}
+
+
 impl Task {
     /// インスタンス生成
     pub const fn new() -> Self {
@@ -55,6 +108,7 @@ impl Task {
             task: None,
             exinf: 0,
             actcnt: 0,
+            timeout: Timeout::new(),
         }
     }
 
@@ -112,6 +166,16 @@ impl Task {
         }
     }
 
+    /*
+    pub(crate) fn remove_from_timeout(&mut self) {
+        if self.timeout.prev != ptr::null_mut() {
+            unsafe{
+                TIME_QUEUE.remove(self);
+            }
+        }
+    }
+    */
+
     pub(crate) fn attach_ready_queue(&mut self) {
         unsafe {
             READY_QUEUE.insert_priority_order(self);
@@ -163,8 +227,6 @@ impl Task {
     }
 }
 
-static mut CURRENT_TASK: *mut Task = ptr::null_mut();
-static mut READY_QUEUE: TaskQueue = TaskQueue::new();
 
 pub(crate) unsafe fn detach_ready_queue() -> Option<&'static mut Task> {
     set_dispatch_reserve_flag();
