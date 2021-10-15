@@ -14,6 +14,7 @@ jelly-pac = { path = "../pac" }
 cc = "1.0.36"
 
 [features]
-default = []
+default = ["std"]
+std=[]
 pl390 = []
 

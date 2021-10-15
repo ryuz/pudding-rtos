@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 jelly-pac    = { path = "../../pac"} 
-jelly-kernel = { path = "../../kernel", features=["pl390"] } 
+jelly-kernel = { path = "../../kernel", default-features=false, features=["pl390"] } 
 
 [build-dependencies]
 cc = "1.0.36"
