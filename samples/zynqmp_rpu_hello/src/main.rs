@@ -42,7 +42,7 @@ static mut STACK1: [u8; 4096] = [0; 4096];
 static mut TASK0: Task = Task::new();
 static mut TASK1: Task = Task::new();
 
-static mut SEM0: Semaphore = Semaphore::new(0);
+static mut SEM0: Semaphore = Semaphore::new(0, Order::Fifo);
 
 // main
 #[no_mangle]

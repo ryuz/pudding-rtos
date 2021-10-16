@@ -1,6 +1,5 @@
-use crate::*;
 use crate::system::*;
-
+use crate::*;
 
 // Semephore control block
 pub struct Semaphore {
@@ -8,7 +7,6 @@ pub struct Semaphore {
     order: Order,
     count: SemCount,
 }
-
 
 impl Semaphore {
     pub const fn new(init_count: SemCount, order: Order) -> Self {
@@ -25,7 +23,7 @@ impl Semaphore {
             self.count -= 1;
         } else {
             let task = current_task().unwrap();
-            task.detach_from_queue();   // remove from ready queue
+            task.detach_from_queue(); // remove from ready queue
             task.attach_to_queue(&mut self.queue, self.order);
             set_dispatch_reserve_flag();
         }
@@ -45,4 +43,3 @@ impl Semaphore {
         };
     }
 }
-

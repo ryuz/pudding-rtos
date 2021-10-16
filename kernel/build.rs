@@ -28,10 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "src/asm/arm/kernel_context_switch.S",
                 "kernel_context_switch",
             ],
-            [
-                "src/asm/arm/kernel_exception_irq.S",
-                "kernel_exception_irq",
-            ],
+            ["src/asm/arm/kernel_exception_irq.S", "kernel_exception_irq"],
         ];
 
         for name in src_files.into_iter() {
@@ -46,7 +43,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .compile(name[1]);
         }
     }
-    
+
     if target.contains("aarch64") {
         // ソースファイル
         let src_files = vec![
@@ -61,9 +58,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         ];
 
         for name in src_files.into_iter() {
-            Build::new()
-                .file(name[0])
-                .compile(name[1]);
+            Build::new().file(name[0]).compile(name[1]);
         }
     }
 
@@ -81,10 +76,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         ];
 
         for name in src_files.into_iter() {
-            Build::new()
-                .flag("-fPIE")
-                .file(name[0])
-                .compile(name[1]);
+            Build::new().flag("-fPIE").file(name[0]).compile(name[1]);
         }
     }
 

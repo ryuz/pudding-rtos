@@ -1,6 +1,5 @@
 use core::ptr;
 
-
 #[cfg(target_arch = "x86_64")]
 pub mod x86_64;
 #[cfg(target_arch = "x86_64")]
@@ -21,10 +20,8 @@ pub mod dummy;
 #[cfg(not(any(target_arch = "x86_64", target_arch = "arm", target_arch = "aarch64")))]
 pub use self::dummy::*;
 
-
 static mut SYSTEM_CONTEXT: Context = Context::new();
 static mut CURRENT_CONTEXT: *mut Context = ptr::null_mut();
-
 
 pub(crate) unsafe fn context_switch_to_system() {
     SYSTEM_CONTEXT.switch();
@@ -37,13 +34,13 @@ pub(crate) fn context_initialize() {
 }
 
 impl Context {
-    pub (crate) fn create(&mut self, stack: &mut [u8], entry: extern "C" fn(isize), exinf: isize) {
+    pub(crate) fn create(&mut self, stack: &mut [u8], entry: extern "C" fn(isize), exinf: isize) {
         unsafe {
             self._create(stack, entry, exinf);
         }
     }
 
-    pub (crate) fn switch(&mut self) {
+    pub(crate) fn switch(&mut self) {
         unsafe {
             let cur_ctx = CURRENT_CONTEXT;
             CURRENT_CONTEXT = self as *mut Context;
@@ -59,4 +56,3 @@ impl Context {
         }
     }
 }
-

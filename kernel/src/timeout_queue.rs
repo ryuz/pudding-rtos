@@ -2,8 +2,8 @@
 
 use core::ptr;
 
-use num::Integer;
 use core::marker::PhantomData;
+use num::Integer;
 
 pub trait TimeoutObject<OBJ, RELTIM>
 where
@@ -41,39 +41,37 @@ where
         }
     }
 
-
-    pub (crate) fn add(&mut self, obj: &mut OBJ, tmout: RELTIM) {
+    pub(crate) fn add(&mut self, obj: &mut OBJ, tmout: RELTIM) {
         unsafe {
             let mut tmout = tmout;
             let ptr = obj as *mut OBJ;
-            
+
             if self.head == ptr::null_mut() {
                 // 最初の１つをキューに登録
                 obj.set_next(ptr);
-                obj.set_prev( ptr);
+                obj.set_prev(ptr);
                 self.head = ptr;
-                
+
                 // タイムアウト時刻を設定
                 obj.set_difftim(tmout);
-            }
-            else {
+            } else {
                 // 挿入場所を検索
                 let mut next = self.head;
                 let mut prev = (*next).prev();
                 while {
                     let tmout_next = (*next).difftim();
-                    
+
                     // 時間比較
                     if tmout < tmout_next {
                         // 先頭なら
                         if next == self.head {
-                            self.head = ptr;	// 先頭ポインタ更新
+                            self.head = ptr; // 先頭ポインタ更新
                         }
-                        
+
                         // 時間の差分を設定
                         (*next).set_difftim(tmout_next - tmout);
                         (*ptr).set_difftim(tmout);
-                        
+
                         // リストに挿入
                         (*ptr).set_next(next);
                         (*ptr).set_prev(prev);
@@ -81,17 +79,17 @@ where
                         (*next).set_prev(ptr);
                         return;
                     }
-                    
-                    tmout = tmout - tmout_next;		// 差分を減算
-                    
+
+                    tmout = tmout - tmout_next; // 差分を減算
+
                     prev = next;
-                    next = (*next).next();		// 次のオブジェクトへ進む
-                    next != self.head  // リストを一周するまでループ
-                }{}
+                    next = (*next).next(); // 次のオブジェクトへ進む
+                    next != self.head // リストを一周するまでループ
+                } {}
 
                 // 残った差分を設定
                 (*ptr).set_difftim(tmout);
-                
+
                 // 末尾に追加
                 (*ptr).set_next(next);
                 (*ptr).set_prev(prev);
@@ -101,9 +99,8 @@ where
         }
     }
 
-
     // タイムアウト行列からオブジェクトを取り除く
-    pub (crate) fn remove(&mut self, obj: &mut OBJ) {
+    pub(crate) fn remove(&mut self, obj: &mut OBJ) {
         unsafe {
             let ptr = obj as *mut OBJ;
             let prev = obj.prev();
@@ -113,12 +110,10 @@ where
                 return;
             }
 
-            // キューの最後の１つなら 
+            // キューの最後の１つなら
             if prev == ptr {
-                self.head = ptr::null_mut();    // タイムアウトキューを空にする
-            }
-            else
-            {
+                self.head = ptr::null_mut(); // タイムアウトキューを空にする
+            } else {
                 let next = (*ptr).next();
                 let prev = (*ptr).prev();
 
@@ -127,12 +122,12 @@ where
                     // 時間差分を清算
                     (*next).set_difftim((*next).difftim() + (*ptr).difftim());
                 }
-                
+
                 // 先頭なら
                 if ptr == self.head {
-                    self.head = next;	// 先頭位置更新
+                    self.head = next; // 先頭位置更新
                 }
-                
+
                 // キューから外す
                 (*prev).set_next(next);
                 (*next).set_prev(prev);
@@ -143,9 +138,8 @@ where
         }
     }
 
-
     // タイムアウトにタイムティック供給
-    pub (crate) fn sig_tim(&mut self, tictim: RELTIM) {
+    pub(crate) fn sig_tim(&mut self, tictim: RELTIM) {
         unsafe {
             // 先頭タスク取得
             let mut tictim = tictim;
@@ -159,27 +153,27 @@ where
             // タイムアウトキューの処理
             loop {
                 let diftim = (*ptr).difftim();
-                
+
                 // タイムアウトに達しないなら
                 if diftim > tictim {
-                    (*ptr).set_difftim(diftim - tictim);    // タイムアウト時間を減算
+                    (*ptr).set_difftim(diftim - tictim); // タイムアウト時間を減算
                     break;
                 }
-                
-                tictim = tictim - diftim;   // タイムティックを減算
-                
-                
+
+                tictim = tictim - diftim; // タイムティックを減算
+
                 // キューから外す
                 let next = (*ptr).next();
                 let prev = (*ptr).prev();
-                if next == ptr {	// 最後の１つなら
+                if next == ptr {
+                    // 最後の１つなら
                     // キューを空にする
                     (*ptr).set_prev(ptr::null_mut());
-                    (*ptr).timeout();   // タイムアウトを知らせる
+                    (*ptr).timeout(); // タイムアウトを知らせる
                     ptr = ptr::null_mut();
                     break;
                 }
-                
+
                 // キューから取り外す
                 (*prev).set_next(next);
                 (*next).set_prev(prev);
@@ -187,17 +181,16 @@ where
 
                 // タイムアウトを知らせる
                 (*ptr).timeout();
-                
+
                 // 次に進む
                 ptr = next;
             }
-            
+
             // 先頭を更新
             self.head = ptr;
         }
     }
 }
-
 
 impl<OBJ, RELTIM> Drop for TimeoutQueue<OBJ, RELTIM>
 where
@@ -216,13 +209,11 @@ where
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    static mut TEST_TIME:i32 = 0;
+    static mut TEST_TIME: i32 = 0;
 
     struct TestObject {
         id: i32,
@@ -245,13 +236,13 @@ mod tests {
     }
 
     impl TimeoutObject<TestObject, i32> for TestObject {
-        fn difftim(&self) -> i32{
+        fn difftim(&self) -> i32 {
             self.difftim
         }
         fn set_difftim(&mut self, difftim: i32) {
             self.difftim = difftim;
         }
-    
+
         fn next(&self) -> *mut TestObject {
             self.next
         }
@@ -261,13 +252,13 @@ mod tests {
 
         fn prev(&self) -> *mut TestObject {
             self.prev
-        }        
+        }
         fn set_prev(&mut self, prev: *mut TestObject) {
             self.prev = prev;
         }
 
         fn timeout(&mut self) {
-            self.time = unsafe{TEST_TIME};
+            self.time = unsafe { TEST_TIME };
         }
 
         fn queue_dropped(&mut self) {}
@@ -281,7 +272,9 @@ mod tests {
         let mut obj2 = TestObject::new(2);
 
         // 単純追加＆時間経過
-        unsafe{ TEST_TIME = 0; };
+        unsafe {
+            TEST_TIME = 0;
+        };
         que.add(&mut obj0, 3);
         assert_eq!(que.head, &mut obj0 as *mut TestObject);
         que.add(&mut obj1, 1);
@@ -299,8 +292,10 @@ mod tests {
         assert_eq!(obj1.prev, &mut obj2 as *mut TestObject);
         assert_eq!(obj2.prev, &mut obj0 as *mut TestObject);
         assert_eq!(obj0.prev, &mut obj1 as *mut TestObject);
-        
-        unsafe{ TEST_TIME += 1; };
+
+        unsafe {
+            TEST_TIME += 1;
+        };
         que.sig_tim(1);
         assert_eq!(obj0.time, 0);
         assert_eq!(obj1.time, 1);
@@ -310,26 +305,35 @@ mod tests {
         assert_eq!(obj2.next, &mut obj0 as *mut TestObject);
         assert_eq!(obj0.prev, &mut obj2 as *mut TestObject);
         assert_eq!(obj2.prev, &mut obj0 as *mut TestObject);
-        
 
-        unsafe{ TEST_TIME += 1; };
+        unsafe {
+            TEST_TIME += 1;
+        };
         que.sig_tim(1);
         assert_eq!(obj0.time, 0);
         assert_eq!(obj1.time, 1);
         assert_eq!(obj2.time, 0);
 
-        unsafe{ TEST_TIME += 1; };
+        unsafe {
+            TEST_TIME += 1;
+        };
         que.sig_tim(1);
         assert_eq!(obj0.time, 3);
         assert_eq!(obj1.time, 1);
         assert_eq!(obj2.time, 0);
 
-        unsafe{ TEST_TIME += 1; }; que.sig_tim(1);
+        unsafe {
+            TEST_TIME += 1;
+        };
+        que.sig_tim(1);
         assert_eq!(obj0.time, 3);
         assert_eq!(obj1.time, 1);
         assert_eq!(obj2.time, 4);
 
-        unsafe{ TEST_TIME += 1; }; que.sig_tim(1);
+        unsafe {
+            TEST_TIME += 1;
+        };
+        que.sig_tim(1);
         assert_eq!(obj0.time, 3);
         assert_eq!(obj1.time, 1);
         assert_eq!(obj2.time, 4);
@@ -347,12 +351,16 @@ mod tests {
         let mut obj2 = TestObject::new(2);
 
         // 一括時間経過
-        unsafe{ TEST_TIME = 0; };
+        unsafe {
+            TEST_TIME = 0;
+        };
         que.add(&mut obj0, 3);
         que.add(&mut obj1, 1);
         que.add(&mut obj2, 4);
-        
-        unsafe{ TEST_TIME += 4; };
+
+        unsafe {
+            TEST_TIME += 4;
+        };
         que.sig_tim(4);
         assert_eq!(obj0.time, 4);
         assert_eq!(obj1.time, 4);
@@ -371,7 +379,9 @@ mod tests {
         let mut obj2 = TestObject::new(2);
 
         // 先頭削除
-        unsafe{ TEST_TIME = 0; };
+        unsafe {
+            TEST_TIME = 0;
+        };
         que.add(&mut obj0, 3);
         que.add(&mut obj1, 1);
         que.add(&mut obj2, 4);
@@ -379,7 +389,9 @@ mod tests {
         que.remove(&mut obj1);
 
         for _ in 0..5 {
-            unsafe{ TEST_TIME += 1; };
+            unsafe {
+                TEST_TIME += 1;
+            };
             que.sig_tim(1);
         }
         assert_eq!(obj0.time, 3);
@@ -395,7 +407,9 @@ mod tests {
         let mut obj2 = TestObject::new(2);
 
         // 中間削除
-        unsafe{ TEST_TIME = 0; };
+        unsafe {
+            TEST_TIME = 0;
+        };
         que.add(&mut obj0, 3);
         que.add(&mut obj1, 1);
         que.add(&mut obj2, 4);
@@ -403,7 +417,9 @@ mod tests {
         que.remove(&mut obj0);
 
         for _ in 0..5 {
-            unsafe{ TEST_TIME += 1; };
+            unsafe {
+                TEST_TIME += 1;
+            };
             que.sig_tim(1);
         }
         assert_eq!(obj0.time, 0);
@@ -419,7 +435,9 @@ mod tests {
         let mut obj2 = TestObject::new(2);
 
         // 末尾削除
-        unsafe{ TEST_TIME = 0; };
+        unsafe {
+            TEST_TIME = 0;
+        };
         que.add(&mut obj0, 3);
         que.add(&mut obj1, 1);
         que.add(&mut obj2, 4);
@@ -427,7 +445,9 @@ mod tests {
         que.remove(&mut obj2);
 
         for _ in 0..5 {
-            unsafe{ TEST_TIME += 1; };
+            unsafe {
+                TEST_TIME += 1;
+            };
             que.sig_tim(1);
         }
         assert_eq!(obj0.time, 3);
@@ -441,14 +461,14 @@ mod tests {
         static mut OBJ0: TestObject = TestObject::new(0);
         static mut OBJ1: TestObject = TestObject::new(1);
         static mut OBJ2: TestObject = TestObject::new(2);
-        
+
         unsafe {
             // 単純追加＆時間経過し
             TEST_TIME = 0;
             QUE.add(&mut OBJ0, 3);
             QUE.add(&mut OBJ1, 1);
             QUE.add(&mut OBJ2, 4);
-            
+
             for _ in 0..5 {
                 TEST_TIME += 1;
                 QUE.sig_tim(1);
@@ -459,4 +479,3 @@ mod tests {
         }
     }
 }
-
