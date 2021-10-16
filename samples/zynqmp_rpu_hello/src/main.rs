@@ -59,48 +59,48 @@ pub unsafe extern "C" fn main() -> ! {
     println!("-------------");
     */
 
-    println!("Start");
-    {
-        kernel::set_debug_print(Some(debug_print));
+    println!("kernel start");
 
-        kernel::initialize();
-        kernel::interrupt::initialize(&mut STACK_INT);
+    kernel::set_debug_print(Some(debug_print));
 
-        kernel::irc::pl390::initialize(0xf9001000, 0xf9000000);
-        let pl390 = jelly_kernel::irc::pl390::take();
+    kernel::initialize();
+    kernel::interrupt::initialize(&mut STACK_INT);
 
-        let targetcpu: u8 = 0x01;
-        pl390.icd_disable();
+    kernel::irc::pl390::initialize(0xf9001000, 0xf9000000);
+    let pl390 = jelly_kernel::irc::pl390::take();
 
-        // set TTC0-1
-        pl390.icd_set_target(74, targetcpu);
+    let targetcpu: u8 = 0x01;
+    pl390.icd_disable();
 
-        // PL
-        for i in 0..8 {
-            pl390.icd_set_target(121 + i, targetcpu);
-            pl390.icd_set_config(121 + i, 0x01); // 0x01: level, 0x03: edge
-        }
-        for i in 0..8 {
-            pl390.icd_set_target(136 + i, targetcpu);
-            pl390.icd_set_config(136 + i, 0x01); // 0x01: level, 0x03: edge
-        }
+    // set TTC0-1
+    pl390.icd_set_target(74, targetcpu);
 
-        pl390.icd_enable();
-
-        timer::timer_initialize(timer_int_handler);
-
-        wait(100);
-        //      println!("timer:{}", timer::timer_get_counter_value());
-
-        TASK0.create(0, task0, 0, &mut STACK0);
-        TASK1.create(1, task1, 1, &mut STACK1);
-        TASK0.activate();
-        TASK1.activate();
-
-        //        kernel::cpu::cpu_unlock();
+    // PL
+    for i in 0..8 {
+        pl390.icd_set_target(121 + i, targetcpu);
+        pl390.icd_set_config(121 + i, 0x01); // 0x01: level, 0x03: edge
     }
-    println!("End");
+    for i in 0..8 {
+        pl390.icd_set_target(136 + i, targetcpu);
+        pl390.icd_set_config(136 + i, 0x01); // 0x01: level, 0x03: edge
+    }
 
+    pl390.icd_enable();
+
+    timer::timer_initialize(timer_int_handler);
+
+    wait(100);
+    //      println!("timer:{}", timer::timer_get_counter_value());
+
+    TASK0.create(0, task0, 0, &mut STACK0);
+    TASK1.create(1, task1, 1, &mut STACK1);
+    TASK0.activate();
+    TASK1.activate();
+    
+    println!("Idle loop");
+    kernel::idle_loop();
+
+    /*
     loop {
         //        kernel::cpu::cpu_unlock();
         println!(
@@ -109,36 +109,51 @@ pub unsafe extern "C" fn main() -> ! {
         );
         //        println!("state:{}", system::is_interrupt_state());
         wait(1000000);
+        loop {}
     }
+    */
 }
 
 fn task0(_exinf: isize) {
-    println!("Task0");
+    println!("Task0:start");
     unsafe {
+        for _ in 0..3 {
+            println!("Task0:sleep_strat");
+            kernel::sleep(1000);
+            println!("Task0:sleep_end");
+        }
+
+        println!("Task0:signal to semaphore");
         SEM0.signal();
+
     }
+    println!("Task0:end");
     //    println!("state:{}", system::is_interrupt_state());
 }
 
 fn task1(_exinf: isize) {
-    println!("Task1");
+    println!("Task1:start");
     unsafe {
-        loop {
-            SEM0.wait();
-            println!("wait sem");
-        }
+        println!("Task1: wait semaphore");
+        SEM0.wait();
     }
     //    println!("state:{}", system::is_interrupt_state());
+    println!("Task1:end");
 }
 
-static mut TIMER_COUNTER: u32 = 0;
+// static mut TIMER_COUNTER: u32 = 0;
+
 
 // タイマ割込みハンドラ
 fn timer_int_handler() {
-    unsafe {
-        //  割込み要因クリア
-        timer::timer_clear_interrupt();
-
+    //  割込み要因クリア
+    timer::timer_clear_interrupt();
+    
+    // カーネルにタイムティック供給
+    kernel::supply_time_tick(1);
+        
+    /*
+    unsafe{
         TIMER_COUNTER = TIMER_COUNTER.wrapping_add(1);
         if TIMER_COUNTER % 1000 == 0 {
             //            println!("timer irq:{}", system::is_interrupt_state());
@@ -146,4 +161,6 @@ fn timer_int_handler() {
             TASK0.activate();
         }
     }
+    */
 }
+
