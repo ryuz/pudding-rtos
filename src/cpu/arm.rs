@@ -4,8 +4,6 @@ pub use jelly_pac::arm::cpu;
 pub use jelly_pac::arm::mpu;
 pub use jelly_pac::arm::vfp;
 
-
-
 #[repr(C)]
 struct CpuControlBlock {
     pub imask: u32, // 割り込みマスク状態

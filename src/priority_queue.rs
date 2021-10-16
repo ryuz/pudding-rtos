@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
+use core::marker::PhantomData;
 use core::ptr;
 use num::Integer;
-use core::marker::PhantomData;
 
 pub trait PriorityObject<OBJ, PRI>
 where

@@ -3,13 +3,19 @@
 #![feature(const_fn_trait_bound)]
 #![feature(const_fn_fn_ptr_basics)]
 
-pub type Priority = i8;
+pub type Priority = u32;
 pub type RelTime = u32;
-pub type ActCount = u8;
+pub type ActCount = u32;
+pub type SemCount = u32;
 
+#[derive(Clone, Copy)]
+pub enum Order {
+    Priority,
+    Fifo,
+}
 
 pub mod cpu;
-//pub use cpu::*;
+pub use cpu::*;
 
 pub mod context;
 //pub use context::*;
@@ -27,6 +33,9 @@ pub use task::*;
 
 pub mod semaphore;
 pub use semaphore::*;
+
+pub mod time;
+pub use time::*;
 
 pub unsafe fn initialize() {
     cpu::cpu_initialize();
