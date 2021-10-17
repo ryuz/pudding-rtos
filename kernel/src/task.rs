@@ -2,9 +2,9 @@
 
 use core::ptr::NonNull;
 
-use crate::*;
 use crate::priority_queue::*;
 use crate::timeout_queue::*;
+use crate::*;
 
 pub(crate) type TaskQueue = PriorityQueue<Task, Priority>;
 type TimeQueue = TimeoutQueue<Task, RelTime>;
@@ -57,15 +57,13 @@ mod ready_queue {
         }
     }
 
-    pub(crate) fn is_attached(task: &Task) -> bool
-    {
-//        if task.queue.is_none() {false} else {
-//        task.queue.unwrap().as_ptr() == unsafe{&mut READY_QUEUE as *mut TaskQueue}}
+    pub(crate) fn is_attached(task: &Task) -> bool {
+        //        if task.queue.is_none() {false} else {
+        //        task.queue.unwrap().as_ptr() == unsafe{&mut READY_QUEUE as *mut TaskQueue}}
 
-        task.queue == Some(unsafe{NonNull::new_unchecked(&mut READY_QUEUE as *mut TaskQueue)})
+        task.queue == Some(unsafe { NonNull::new_unchecked(&mut READY_QUEUE as *mut TaskQueue) })
     }
 }
-
 
 // ---------------------------------
 //  Timeout Queue
@@ -94,8 +92,7 @@ mod timeout_queue {
         }
     }
 
-    pub(crate) fn is_attached(task: &Task) -> bool
-    {
+    pub(crate) fn is_attached(task: &Task) -> bool {
         !task.timeout.prev.is_none()
     }
 }
@@ -184,23 +181,19 @@ impl Task {
         self.result
     }
 
-    pub(crate) fn is_attached_to_ready_queue(&self) -> bool
-    {
+    pub(crate) fn is_attached_to_ready_queue(&self) -> bool {
         ready_queue::is_attached(self)
     }
 
-    pub(crate) fn is_attached_to_timeout(&self) -> bool
-    {
+    pub(crate) fn is_attached_to_timeout(&self) -> bool {
         timeout_queue::is_attached(self)
     }
 
-    pub(crate) fn is_attached_to_any_queue(&self) -> bool
-    {
+    pub(crate) fn is_attached_to_any_queue(&self) -> bool {
         self.queue != None
     }
 
-    pub(crate) fn is_attached_to_wait_queue(&self) -> bool
-    {
+    pub(crate) fn is_attached_to_wait_queue(&self) -> bool {
         !self.is_attached_to_ready_queue() && self.is_attached_to_any_queue()
     }
 
@@ -224,10 +217,10 @@ impl Task {
 
     pub(crate) fn detach_from_queue(&mut self) {
         match self.queue {
-            Some(mut que) => {
-                    unsafe { que.as_mut().remove(self); }
-                },
-            _ => {},
+            Some(mut que) => unsafe {
+                que.as_mut().remove(self);
+            },
+            _ => {}
         }
     }
 

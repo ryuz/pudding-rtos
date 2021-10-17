@@ -26,7 +26,6 @@ where
     _marker: PhantomData<PRI>,
 }
 
-
 impl<OBJ, PRI> PriorityQueue<OBJ, PRI>
 where
     OBJ: PriorityObject<OBJ, PRI>,
@@ -42,22 +41,22 @@ where
     /// 優先度順で追加
     pub fn insert_priority_order(&mut self, obj: &mut OBJ) {
         debug_assert_eq!(obj.queue(), None);
-        obj.set_queue(Some(unsafe{ NonNull::new_unchecked(self as *mut Self) }));
+        obj.set_queue(Some(unsafe { NonNull::new_unchecked(self as *mut Self) }));
 
         // ポインタ化
-        let ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
+        let ptr = unsafe { NonNull::new_unchecked(obj as *mut OBJ) };
 
         match self.tail {
             None => {
                 // キューにタスクが無ければ先頭に設定
                 obj.set_next(Some(ptr));
                 self.tail = Some(ptr);
-            },
+            }
             Some(tail) => {
                 // キューが空でないなら挿入位置を探索
                 // タスク優先度を取得
                 let pri = obj.priority();
-                
+
                 // 先頭から探索
                 let mut prev = tail;
                 let mut next = unsafe { prev.as_mut().next().unwrap_unchecked() };
@@ -81,30 +80,33 @@ where
                 }
 
                 // 挿入
-                unsafe { prev.as_mut().set_next(Some(ptr)); }
+                unsafe {
+                    prev.as_mut().set_next(Some(ptr));
+                }
                 obj.set_next(Some(next));
             }
         }
     }
-    
 
     /// FIFO順で追加
     pub fn push_back(&mut self, obj: &mut OBJ) {
         debug_assert_eq!(obj.queue(), None);
-        obj.set_queue(Some(unsafe{ NonNull::new_unchecked(self as *mut Self) }));
+        obj.set_queue(Some(unsafe { NonNull::new_unchecked(self as *mut Self) }));
 
         // ポインタ化
-        let ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
+        let ptr = unsafe { NonNull::new_unchecked(obj as *mut OBJ) };
 
         match self.tail {
             None => {
                 // キューにタスクが無ければ先頭に設定
                 obj.set_next(Some(ptr));
-            },
+            }
             Some(mut tail_ptr) => {
                 // キューが空でないなら末尾に追加
-                obj.set_next(unsafe{tail_ptr.as_mut().next()});
-                unsafe{ tail_ptr.as_mut().set_next(Some(ptr)); }
+                obj.set_next(unsafe { tail_ptr.as_mut().next() });
+                unsafe {
+                    tail_ptr.as_mut().set_next(Some(ptr));
+                }
             }
         }
         self.tail = Some(ptr);
@@ -113,9 +115,9 @@ where
     /// 先頭を参照
     pub fn front(&mut self) -> Option<&mut OBJ> {
         match self.tail {
-            None => { None },
+            None => None,
             Some(mut tail_ptr) => {
-                Some(unsafe{tail_ptr.as_mut().next().unwrap_unchecked().as_mut()})
+                Some(unsafe { tail_ptr.as_mut().next().unwrap_unchecked().as_mut() })
             }
         }
     }
@@ -123,7 +125,7 @@ where
     /// 先頭を取り出し
     pub fn pop_front<'a, 'b>(&'a mut self) -> Option<&'b mut OBJ> {
         match self.tail {
-            None => {None},
+            None => None,
             Some(mut tail) => {
                 let obj_tail = unsafe { tail.as_mut() };
                 let obj_head = unsafe { obj_tail.next().unwrap_unchecked().as_mut() };
@@ -138,7 +140,6 @@ where
         }
     }
 
-
     // 接続位置で時間が変わるので注意
     // 先頭しか外さない or タスク数を制約するなどで時間保証可能
     // 双方向リストする手はあるので、大量タスクを扱うケースが出たら考える
@@ -146,20 +147,20 @@ where
         debug_assert_eq!(obj.queue().unwrap().as_ptr(), self as *mut Self);
 
         // ポインタ化
-        let ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
+        let ptr = unsafe { NonNull::new_unchecked(obj as *mut OBJ) };
 
         // 接続位置を探索
-        let next = unsafe{obj.next().unwrap_unchecked()};
+        let next = unsafe { obj.next().unwrap_unchecked() };
         if next == ptr {
             /* last one */
             self.tail = None;
         } else {
-            let mut prev = unsafe{self.tail.unwrap_unchecked()};
-            while unsafe{prev.as_mut().next().unwrap_unchecked()} != ptr {
-                prev = unsafe{prev.as_mut().next().unwrap_unchecked()};
+            let mut prev = unsafe { self.tail.unwrap_unchecked() };
+            while unsafe { prev.as_mut().next().unwrap_unchecked() } != ptr {
+                prev = unsafe { prev.as_mut().next().unwrap_unchecked() };
             }
-            unsafe{prev.as_mut().set_next(obj.next())};
-            if unsafe{self.tail.unwrap_unchecked()} == ptr {
+            unsafe { prev.as_mut().set_next(obj.next()) };
+            if unsafe { self.tail.unwrap_unchecked() } == ptr {
                 self.tail = Some(prev);
             }
         }
@@ -182,7 +183,6 @@ where
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

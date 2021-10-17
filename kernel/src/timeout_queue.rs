@@ -1,11 +1,9 @@
 #![allow(dead_code)]
 
-
 //use core::ptr;
-use core::ptr::NonNull;
 use core::marker::PhantomData;
+use core::ptr::NonNull;
 use num::Integer;
-
 
 pub trait TimeoutObject<OBJ, RELTIM>
 where
@@ -47,7 +45,7 @@ where
         let mut tmout = tmout;
 
         // ポインタ化
-        let mut ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
+        let mut ptr = unsafe { NonNull::new_unchecked(obj as *mut OBJ) };
 
         match self.head {
             None => {
@@ -62,10 +60,10 @@ where
             Some(head) => {
                 // 挿入場所を検索
                 let mut next = head;
-                let mut prev = unsafe{next.as_mut().prev().unwrap_unchecked()};
+                let mut prev = unsafe { next.as_mut().prev().unwrap_unchecked() };
                 while {
-                    let tmout_next = unsafe{next.as_ref()}.difftim();
-                    
+                    let tmout_next = unsafe { next.as_ref() }.difftim();
+
                     // 時間比較
                     if tmout < tmout_next {
                         // 先頭なら
@@ -74,32 +72,32 @@ where
                         }
 
                         // 時間の差分を設定
-                        unsafe{next.as_mut()}.set_difftim(tmout_next - tmout);
-                        unsafe{ptr.as_mut()}.set_difftim(tmout);
+                        unsafe { next.as_mut() }.set_difftim(tmout_next - tmout);
+                        unsafe { ptr.as_mut() }.set_difftim(tmout);
 
                         // リストに挿入
-                        unsafe{ptr.as_mut()}.set_next(Some(next));
-                        unsafe{ptr.as_mut()}.set_prev(Some(prev));
-                        unsafe{prev.as_mut()}.set_next(Some(ptr));
-                        unsafe{next.as_mut()}.set_prev(Some(ptr));
+                        unsafe { ptr.as_mut() }.set_next(Some(next));
+                        unsafe { ptr.as_mut() }.set_prev(Some(prev));
+                        unsafe { prev.as_mut() }.set_next(Some(ptr));
+                        unsafe { next.as_mut() }.set_prev(Some(ptr));
                         return;
                     }
 
                     tmout = tmout - tmout_next; // 差分を減算
 
                     prev = next;
-                    next = unsafe{next.as_mut().next().unwrap_unchecked()}; // 次のオブジェクトへ進む
+                    next = unsafe { next.as_mut().next().unwrap_unchecked() }; // 次のオブジェクトへ進む
                     Some(next) != self.head // リストを一周するまでループ
                 } {}
-                
+
                 // 残った差分を設定
-                unsafe{ptr.as_mut()}.set_difftim(tmout);
+                unsafe { ptr.as_mut() }.set_difftim(tmout);
 
                 // 末尾に追加
-                unsafe{ptr.as_mut()}.set_next(Some(next));
-                unsafe{ptr.as_mut()}.set_prev(Some(prev));
-                unsafe{prev.as_mut()}.set_next(Some(ptr));
-                unsafe{next.as_mut()}.set_prev(Some(ptr));
+                unsafe { ptr.as_mut() }.set_next(Some(next));
+                unsafe { ptr.as_mut() }.set_prev(Some(prev));
+                unsafe { prev.as_mut() }.set_next(Some(ptr));
+                unsafe { next.as_mut() }.set_prev(Some(ptr));
             }
         }
     }
@@ -107,7 +105,7 @@ where
     // タイムアウト行列からオブジェクトを取り除く
     pub(crate) fn remove(&mut self, obj: &mut OBJ) {
         // ポインタ化
-        let mut ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
+        let mut ptr = unsafe { NonNull::new_unchecked(obj as *mut OBJ) };
 
         let prev = obj.prev();
 
@@ -120,13 +118,15 @@ where
             // キューの最後の１つなら
             self.head = None; // タイムアウトキューを空にする
         } else {
-            let mut next = unsafe{ptr.as_mut().next().unwrap_unchecked()};
-            let mut prev = unsafe{ptr.as_mut().prev().unwrap_unchecked()};
+            let mut next = unsafe { ptr.as_mut().next().unwrap_unchecked() };
+            let mut prev = unsafe { ptr.as_mut().prev().unwrap_unchecked() };
 
             // 末尾でなければ
             if Some(next) != self.head {
                 // 時間差分を清算
-                unsafe{next.as_mut()}.set_difftim(unsafe{next.as_ref()}.difftim() + unsafe{ptr.as_ref()}.difftim());
+                unsafe { next.as_mut() }.set_difftim(
+                    unsafe { next.as_ref() }.difftim() + unsafe { ptr.as_ref() }.difftim(),
+                );
             }
 
             // 先頭なら
@@ -135,63 +135,62 @@ where
             }
 
             // キューから外す
-            unsafe{prev.as_mut()}.set_next(Some(next));
-            unsafe{next.as_mut()}.set_prev(Some(prev));
+            unsafe { prev.as_mut() }.set_next(Some(next));
+            unsafe { next.as_mut() }.set_prev(Some(prev));
         }
 
         // 未接続に設定
-        unsafe{ptr.as_mut()}.set_prev(None);
+        unsafe { ptr.as_mut() }.set_prev(None);
     }
 
     // タイムアウトにタイムティック供給
     pub(crate) fn sig_tim(&mut self, tictim: RELTIM) {
         match self.head {
-            None => {return},
+            None => return,
             Some(mut ptr) => {
                 let mut tictim = tictim;
                 // タイムアウトキューの処理
                 loop {
-                    let diftim = unsafe{ptr.as_ref()}.difftim();
+                    let diftim = unsafe { ptr.as_ref() }.difftim();
 
                     // タイムアウトに達しないなら
                     if diftim > tictim {
-                        unsafe{ptr.as_mut()}.set_difftim(diftim - tictim); // タイムアウト時間を減算
+                        unsafe { ptr.as_mut() }.set_difftim(diftim - tictim); // タイムアウト時間を減算
                         break;
                     }
 
                     tictim = tictim - diftim; // タイムティックを減算
 
                     // キューから外す
-                    let mut next = unsafe{ptr.as_ref().next().unwrap_unchecked()};
-                    let mut prev = unsafe{ptr.as_ref().prev().unwrap_unchecked()};
+                    let mut next = unsafe { ptr.as_ref().next().unwrap_unchecked() };
+                    let mut prev = unsafe { ptr.as_ref().prev().unwrap_unchecked() };
                     if next == ptr {
                         // 最後の１つなら
                         // キューを空にする
-                        unsafe{ptr.as_mut()}.set_prev(None);
+                        unsafe { ptr.as_mut() }.set_prev(None);
                         self.head = None;
 
-                        unsafe{ptr.as_mut()}.timeout(); // タイムアウトを知らせる
+                        unsafe { ptr.as_mut() }.timeout(); // タイムアウトを知らせる
                         return;
                     }
 
                     // キューから取り外す
-                    unsafe{prev.as_mut()}.set_next(Some(next));
-                    unsafe{next.as_mut()}.set_prev(Some(prev));
-                    unsafe{ptr.as_mut()}.set_prev(None);
+                    unsafe { prev.as_mut() }.set_next(Some(next));
+                    unsafe { next.as_mut() }.set_prev(Some(prev));
+                    unsafe { ptr.as_mut() }.set_prev(None);
 
                     // タイムアウトを知らせる
-                    unsafe{ptr.as_mut()}.timeout(); // タイムアウトを知らせる
+                    unsafe { ptr.as_mut() }.timeout(); // タイムアウトを知らせる
 
                     // 次に進む
                     ptr = next;
                 }
-                
-                self.head = Some(ptr);  // 先頭を更新
+
+                self.head = Some(ptr); // 先頭を更新
             }
         }
     }
 }
-
 
 impl<OBJ, RELTIM> Drop for TimeoutQueue<OBJ, RELTIM>
 where
@@ -209,7 +208,6 @@ where
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -481,4 +479,3 @@ mod tests {
         }
     }
 }
-
