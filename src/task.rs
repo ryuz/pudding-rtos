@@ -1,12 +1,10 @@
 #![allow(dead_code)]
 
-use core::ptr;
 use core::ptr::NonNull;
-use crate::context::*;
-use crate::priority_queue::*;
-use crate::system::*;
-use crate::timeout_queue::*;
+
 use crate::*;
+use crate::priority_queue::*;
+use crate::timeout_queue::*;
 
 pub(crate) type TaskQueue = PriorityQueue<Task, Priority>;
 type TimeQueue = TimeoutQueue<Task, RelTime>;
@@ -98,7 +96,7 @@ mod timeout_queue {
 
     pub(crate) fn is_attached(task: &Task) -> bool
     {
-        task.timeout.prev != ptr::null_mut()
+        !task.timeout.prev.is_none()
     }
 }
 
@@ -112,16 +110,16 @@ pub fn supply_time_tick_for_timeout(tick: RelTime) {
 
 struct Timeout {
     difftim: RelTime,
-    next: *mut Task,
-    prev: *mut Task,
+    next: Option<NonNull<Task>>,
+    prev: Option<NonNull<Task>>,
 }
 
 impl Timeout {
     const fn new() -> Self {
         Timeout {
             difftim: 0,
-            next: ptr::null_mut(),
-            prev: ptr::null_mut(),
+            next: None,
+            prev: None,
         }
     }
 }
@@ -232,21 +230,20 @@ impl Task {
             _ => {},
         }
     }
-    
+
     pub(crate) fn attach_to_timeout(&mut self, time: RelTime) {
-        debug_assert_eq!(self.timeout.prev, ptr::null_mut());
+        debug_assert_eq!(self.timeout.prev, None);
         timeout_queue::attach(self, time);
     }
 
     pub(crate) fn detach_from_timeout(&mut self) {
-        if self.timeout.prev != ptr::null_mut() {
+        if !self.timeout.prev.is_none() {
             timeout_queue::detach(self);
         }
     }
 
     // タスクスイッチ
     unsafe fn switch(&mut self) {
-        // CURRENT_TASK = self as *mut Task;
         self.context.switch();
     }
 
@@ -293,17 +290,17 @@ impl TimeoutObject<Task, RelTime> for Task {
         self.timeout.difftim = difftim;
     }
 
-    fn next(&self) -> *mut Task {
+    fn next(&self) -> Option<NonNull<Task>> {
         self.timeout.next
     }
-    fn set_next(&mut self, next: *mut Task) {
+    fn set_next(&mut self, next: Option<NonNull<Task>>) {
         self.timeout.next = next;
     }
 
-    fn prev(&self) -> *mut Task {
+    fn prev(&self) -> Option<NonNull<Task>> {
         self.timeout.prev
     }
-    fn set_prev(&mut self, prev: *mut Task) {
+    fn set_prev(&mut self, prev: Option<NonNull<Task>>) {
         self.timeout.prev = prev;
     }
 
@@ -321,7 +318,7 @@ pub(crate) unsafe fn task_switch() {
     let head = ready_queue::front();
     match head {
         None => {
-            //          CURRENT_TASK = ptr::null_mut();
+            // CURRENT_TASK = None;
             context_switch_to_system();
         }
         Some(task) => {

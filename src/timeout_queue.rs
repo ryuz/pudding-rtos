@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 
-use core::ptr;
 
+//use core::ptr;
+use core::ptr::NonNull;
 use core::marker::PhantomData;
 use num::Integer;
+
 
 pub trait TimeoutObject<OBJ, RELTIM>
 where
@@ -12,10 +14,10 @@ where
 {
     fn difftim(&self) -> RELTIM;
     fn set_difftim(&mut self, difftim: RELTIM);
-    fn next(&self) -> *mut OBJ;
-    fn set_next(&mut self, obj: *mut OBJ);
-    fn prev(&self) -> *mut OBJ;
-    fn set_prev(&mut self, obj: *mut OBJ);
+    fn next(&self) -> Option<NonNull<OBJ>>;
+    fn set_next(&mut self, obj: Option<NonNull<OBJ>>);
+    fn prev(&self) -> Option<NonNull<OBJ>>;
+    fn set_prev(&mut self, obj: Option<NonNull<OBJ>>);
     fn timeout(&mut self);
     fn queue_dropped(&mut self);
 }
@@ -25,7 +27,7 @@ where
     OBJ: TimeoutObject<OBJ, RELTIM>,
     RELTIM: Integer + Copy,
 {
-    head: *mut OBJ,
+    head: Option<NonNull<OBJ>>,
     _marker: PhantomData<RELTIM>,
 }
 
@@ -36,161 +38,160 @@ where
 {
     pub const fn new() -> Self {
         TimeoutQueue::<OBJ, RELTIM> {
-            head: ptr::null_mut(),
+            head: None,
             _marker: PhantomData,
         }
     }
 
     pub(crate) fn add(&mut self, obj: &mut OBJ, tmout: RELTIM) {
-        unsafe {
-            let mut tmout = tmout;
-            let ptr = obj as *mut OBJ;
+        let mut tmout = tmout;
 
-            if self.head == ptr::null_mut() {
+        // ポインタ化
+        let mut ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
+
+        match self.head {
+            None => {
                 // 最初の１つをキューに登録
-                obj.set_next(ptr);
-                obj.set_prev(ptr);
-                self.head = ptr;
+                obj.set_next(Some(ptr));
+                obj.set_prev(Some(ptr));
+                self.head = Some(ptr);
 
                 // タイムアウト時刻を設定
                 obj.set_difftim(tmout);
-            } else {
+            }
+            Some(head) => {
                 // 挿入場所を検索
-                let mut next = self.head;
-                let mut prev = (*next).prev();
+                let mut next = head;
+                let mut prev = unsafe{next.as_mut().prev().unwrap_unchecked()};
                 while {
-                    let tmout_next = (*next).difftim();
-
+                    let tmout_next = unsafe{next.as_ref()}.difftim();
+                    
                     // 時間比較
                     if tmout < tmout_next {
                         // 先頭なら
-                        if next == self.head {
-                            self.head = ptr; // 先頭ポインタ更新
+                        if next == head {
+                            self.head = Some(ptr); // 先頭ポインタ更新
                         }
 
                         // 時間の差分を設定
-                        (*next).set_difftim(tmout_next - tmout);
-                        (*ptr).set_difftim(tmout);
+                        unsafe{next.as_mut()}.set_difftim(tmout_next - tmout);
+                        unsafe{ptr.as_mut()}.set_difftim(tmout);
 
                         // リストに挿入
-                        (*ptr).set_next(next);
-                        (*ptr).set_prev(prev);
-                        (*prev).set_next(ptr);
-                        (*next).set_prev(ptr);
+                        unsafe{ptr.as_mut()}.set_next(Some(next));
+                        unsafe{ptr.as_mut()}.set_prev(Some(prev));
+                        unsafe{prev.as_mut()}.set_next(Some(ptr));
+                        unsafe{next.as_mut()}.set_prev(Some(ptr));
                         return;
                     }
 
                     tmout = tmout - tmout_next; // 差分を減算
 
                     prev = next;
-                    next = (*next).next(); // 次のオブジェクトへ進む
-                    next != self.head // リストを一周するまでループ
+                    next = unsafe{next.as_mut().next().unwrap_unchecked()}; // 次のオブジェクトへ進む
+                    Some(next) != self.head // リストを一周するまでループ
                 } {}
-
+                
                 // 残った差分を設定
-                (*ptr).set_difftim(tmout);
+                unsafe{ptr.as_mut()}.set_difftim(tmout);
 
                 // 末尾に追加
-                (*ptr).set_next(next);
-                (*ptr).set_prev(prev);
-                (*prev).set_next(ptr);
-                (*next).set_prev(ptr);
+                unsafe{ptr.as_mut()}.set_next(Some(next));
+                unsafe{ptr.as_mut()}.set_prev(Some(prev));
+                unsafe{prev.as_mut()}.set_next(Some(ptr));
+                unsafe{next.as_mut()}.set_prev(Some(ptr));
             }
         }
     }
 
     // タイムアウト行列からオブジェクトを取り除く
     pub(crate) fn remove(&mut self, obj: &mut OBJ) {
-        unsafe {
-            let ptr = obj as *mut OBJ;
-            let prev = obj.prev();
+        // ポインタ化
+        let mut ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
 
-            // タイムアウトキューに未接続なら無視
-            if prev == ptr::null_mut() {
-                return;
-            }
+        let prev = obj.prev();
 
-            // キューの最後の１つなら
-            if prev == ptr {
-                self.head = ptr::null_mut(); // タイムアウトキューを空にする
-            } else {
-                let next = (*ptr).next();
-                let prev = (*ptr).prev();
-
-                // 末尾でなければ
-                if next != self.head {
-                    // 時間差分を清算
-                    (*next).set_difftim((*next).difftim() + (*ptr).difftim());
-                }
-
-                // 先頭なら
-                if ptr == self.head {
-                    self.head = next; // 先頭位置更新
-                }
-
-                // キューから外す
-                (*prev).set_next(next);
-                (*next).set_prev(prev);
-            }
-
-            // 未接続に設定
-            (*ptr).set_prev(ptr::null_mut());
+        // タイムアウトキューに未接続なら無視
+        if prev.is_none() {
+            return;
         }
+
+        if prev == Some(ptr) {
+            // キューの最後の１つなら
+            self.head = None; // タイムアウトキューを空にする
+        } else {
+            let mut next = unsafe{ptr.as_mut().next().unwrap_unchecked()};
+            let mut prev = unsafe{ptr.as_mut().prev().unwrap_unchecked()};
+
+            // 末尾でなければ
+            if Some(next) != self.head {
+                // 時間差分を清算
+                unsafe{next.as_mut()}.set_difftim(unsafe{next.as_ref()}.difftim() + unsafe{ptr.as_ref()}.difftim());
+            }
+
+            // 先頭なら
+            if Some(ptr) == self.head {
+                self.head = Some(next); // 先頭位置更新
+            }
+
+            // キューから外す
+            unsafe{prev.as_mut()}.set_next(Some(next));
+            unsafe{next.as_mut()}.set_prev(Some(prev));
+        }
+
+        // 未接続に設定
+        unsafe{ptr.as_mut()}.set_prev(None);
     }
 
     // タイムアウトにタイムティック供給
     pub(crate) fn sig_tim(&mut self, tictim: RELTIM) {
-        unsafe {
-            // 先頭タスク取得
-            let mut tictim = tictim;
-            let mut ptr = self.head;
+        match self.head {
+            None => {return},
+            Some(mut ptr) => {
+                let mut tictim = tictim;
+                // タイムアウトキューの処理
+                loop {
+                    let diftim = unsafe{ptr.as_ref()}.difftim();
 
-            // タイムアウトキューが空ならリターン
-            if ptr == ptr::null_mut() {
-                return;
-            }
+                    // タイムアウトに達しないなら
+                    if diftim > tictim {
+                        unsafe{ptr.as_mut()}.set_difftim(diftim - tictim); // タイムアウト時間を減算
+                        break;
+                    }
 
-            // タイムアウトキューの処理
-            loop {
-                let diftim = (*ptr).difftim();
+                    tictim = tictim - diftim; // タイムティックを減算
 
-                // タイムアウトに達しないなら
-                if diftim > tictim {
-                    (*ptr).set_difftim(diftim - tictim); // タイムアウト時間を減算
-                    break;
+                    // キューから外す
+                    let mut next = unsafe{ptr.as_ref().next().unwrap_unchecked()};
+                    let mut prev = unsafe{ptr.as_ref().prev().unwrap_unchecked()};
+                    if next == ptr {
+                        // 最後の１つなら
+                        // キューを空にする
+                        unsafe{ptr.as_mut()}.set_prev(None);
+                        self.head = None;
+
+                        unsafe{ptr.as_mut()}.timeout(); // タイムアウトを知らせる
+                        return;
+                    }
+
+                    // キューから取り外す
+                    unsafe{prev.as_mut()}.set_next(Some(next));
+                    unsafe{next.as_mut()}.set_prev(Some(prev));
+                    unsafe{ptr.as_mut()}.set_prev(None);
+
+                    // タイムアウトを知らせる
+                    unsafe{ptr.as_mut()}.timeout(); // タイムアウトを知らせる
+
+                    // 次に進む
+                    ptr = next;
                 }
-
-                tictim = tictim - diftim; // タイムティックを減算
-
-                // キューから外す
-                let next = (*ptr).next();
-                let prev = (*ptr).prev();
-                if next == ptr {
-                    // 最後の１つなら
-                    // キューを空にする
-                    (*ptr).set_prev(ptr::null_mut());
-                    (*ptr).timeout(); // タイムアウトを知らせる
-                    ptr = ptr::null_mut();
-                    break;
-                }
-
-                // キューから取り外す
-                (*prev).set_next(next);
-                (*next).set_prev(prev);
-                (*ptr).set_prev(ptr::null_mut());
-
-                // タイムアウトを知らせる
-                (*ptr).timeout();
-
-                // 次に進む
-                ptr = next;
+                
+                self.head = Some(ptr);  // 先頭を更新
             }
-
-            // 先頭を更新
-            self.head = ptr;
         }
     }
 }
+
 
 impl<OBJ, RELTIM> Drop for TimeoutQueue<OBJ, RELTIM>
 where
@@ -200,14 +201,15 @@ where
     fn drop(&mut self) {
         unsafe {
             // 残っているオブジェクトがあれば削除されたことを知らせる
-            while self.head != ptr::null_mut() {
-                let ptr = self.head;
-                self.remove(&mut *ptr);
-                (*ptr).queue_dropped();
+            while !self.head.is_none() {
+                let mut ptr = self.head.unwrap_unchecked();
+                self.remove(ptr.as_mut());
+                ptr.as_mut().queue_dropped();
             }
         }
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -219,8 +221,8 @@ mod tests {
         id: i32,
         time: i32,
         difftim: i32,
-        next: *mut TestObject,
-        prev: *mut TestObject,
+        next: Option<NonNull<TestObject>>,
+        prev: Option<NonNull<TestObject>>,
     }
 
     impl TestObject {
@@ -229,8 +231,8 @@ mod tests {
                 id: id,
                 time: 0,
                 difftim: 0,
-                next: ptr::null_mut(),
-                prev: ptr::null_mut(),
+                next: None,
+                prev: None,
             }
         }
     }
@@ -243,17 +245,17 @@ mod tests {
             self.difftim = difftim;
         }
 
-        fn next(&self) -> *mut TestObject {
+        fn next(&self) -> Option<NonNull<TestObject>> {
             self.next
         }
-        fn set_next(&mut self, next: *mut TestObject) {
+        fn set_next(&mut self, next: Option<NonNull<TestObject>>) {
             self.next = next;
         }
 
-        fn prev(&self) -> *mut TestObject {
+        fn prev(&self) -> Option<NonNull<TestObject>> {
             self.prev
         }
-        fn set_prev(&mut self, prev: *mut TestObject) {
+        fn set_prev(&mut self, prev: Option<NonNull<TestObject>>) {
             self.prev = prev;
         }
 
@@ -276,22 +278,22 @@ mod tests {
             TEST_TIME = 0;
         };
         que.add(&mut obj0, 3);
-        assert_eq!(que.head, &mut obj0 as *mut TestObject);
+        assert_eq!(que.head.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
         que.add(&mut obj1, 1);
-        assert_eq!(que.head, &mut obj1 as *mut TestObject);
-        assert_eq!(obj1.next, &mut obj0 as *mut TestObject);
-        assert_eq!(obj1.prev, &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.next, &mut obj1 as *mut TestObject);
-        assert_eq!(obj0.prev, &mut obj1 as *mut TestObject);
+        assert_eq!(que.head.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+        assert_eq!(obj1.next.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+        assert_eq!(obj1.prev.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+        assert_eq!(obj0.next.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+        assert_eq!(obj0.prev.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
 
         que.add(&mut obj2, 4);
-        assert_eq!(que.head, &mut obj1 as *mut TestObject);
-        assert_eq!(obj1.next, &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.next, &mut obj2 as *mut TestObject);
-        assert_eq!(obj2.next, &mut obj1 as *mut TestObject);
-        assert_eq!(obj1.prev, &mut obj2 as *mut TestObject);
-        assert_eq!(obj2.prev, &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.prev, &mut obj1 as *mut TestObject);
+        assert_eq!(que.head.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+        assert_eq!(obj1.next.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+        assert_eq!(obj0.next.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
+        assert_eq!(obj2.next.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+        assert_eq!(obj1.prev.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
+        assert_eq!(obj2.prev.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+        assert_eq!(obj0.prev.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
 
         unsafe {
             TEST_TIME += 1;
@@ -300,11 +302,11 @@ mod tests {
         assert_eq!(obj0.time, 0);
         assert_eq!(obj1.time, 1);
         assert_eq!(obj2.time, 0);
-        assert_eq!(que.head, &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.next, &mut obj2 as *mut TestObject);
-        assert_eq!(obj2.next, &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.prev, &mut obj2 as *mut TestObject);
-        assert_eq!(obj2.prev, &mut obj0 as *mut TestObject);
+        assert_eq!(que.head.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+        assert_eq!(obj0.next.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
+        assert_eq!(obj2.next.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+        assert_eq!(obj0.prev.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
+        assert_eq!(obj2.prev.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
 
         unsafe {
             TEST_TIME += 1;
@@ -337,10 +339,10 @@ mod tests {
         assert_eq!(obj0.time, 3);
         assert_eq!(obj1.time, 1);
         assert_eq!(obj2.time, 4);
-        assert_eq!(que.head, ptr::null_mut());
-        assert_eq!(obj0.prev, ptr::null_mut());
-        assert_eq!(obj1.prev, ptr::null_mut());
-        assert_eq!(obj2.prev, ptr::null_mut());
+        assert_eq!(que.head, None);
+        assert_eq!(obj0.prev, None);
+        assert_eq!(obj1.prev, None);
+        assert_eq!(obj2.prev, None);
     }
 
     #[test]
@@ -365,10 +367,10 @@ mod tests {
         assert_eq!(obj0.time, 4);
         assert_eq!(obj1.time, 4);
         assert_eq!(obj2.time, 4);
-        assert_eq!(que.head, ptr::null_mut());
-        assert_eq!(obj0.prev, ptr::null_mut());
-        assert_eq!(obj1.prev, ptr::null_mut());
-        assert_eq!(obj2.prev, ptr::null_mut());
+        assert_eq!(que.head, None);
+        assert_eq!(obj0.prev, None);
+        assert_eq!(obj1.prev, None);
+        assert_eq!(obj2.prev, None);
     }
 
     #[test]
@@ -479,3 +481,4 @@ mod tests {
         }
     }
 }
+

@@ -3,7 +3,6 @@
 use core::marker::PhantomData;
 use core::ptr::NonNull;
 use num::Integer;
-use unchecked_unwrap::UncheckedUnwrap;
 
 pub trait PriorityObject<OBJ, PRI>
 where
@@ -61,7 +60,7 @@ where
                 
                 // 先頭から探索
                 let mut prev = tail;
-                let mut next = unsafe { prev.as_mut().next().unchecked_unwrap() };
+                let mut next = unsafe { prev.as_mut().next().unwrap_unchecked() };
                 loop {
                     // 優先度取り出し
                     let next_pri = unsafe { next.as_ref().priority() };
@@ -72,7 +71,7 @@ where
 
                     // 次を探す
                     prev = next;
-                    next = unsafe { prev.as_mut().next().unchecked_unwrap() };
+                    next = unsafe { prev.as_mut().next().unwrap_unchecked() };
 
                     // 末尾なら抜ける
                     if prev == tail {
@@ -116,7 +115,7 @@ where
         match self.tail {
             None => { None },
             Some(mut tail_ptr) => {
-                Some(unsafe{tail_ptr.as_mut().next().unchecked_unwrap().as_mut()})
+                Some(unsafe{tail_ptr.as_mut().next().unwrap_unchecked().as_mut()})
             }
         }
     }
@@ -127,7 +126,7 @@ where
             None => {None},
             Some(mut tail) => {
                 let obj_tail = unsafe { tail.as_mut() };
-                let obj_head = unsafe { obj_tail.next().unchecked_unwrap().as_mut() };
+                let obj_head = unsafe { obj_tail.next().unwrap_unchecked().as_mut() };
                 if self.tail == obj_tail.next() {
                     self.tail = None;
                 } else {
@@ -150,17 +149,17 @@ where
         let ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
 
         // 接続位置を探索
-        let next = unsafe{obj.next().unchecked_unwrap()};
+        let next = unsafe{obj.next().unwrap_unchecked()};
         if next == ptr {
             /* last one */
             self.tail = None;
         } else {
-            let mut prev = unsafe{self.tail.unchecked_unwrap()};
-            while unsafe{prev.as_mut().next().unchecked_unwrap()} != ptr {
-                prev = unsafe{prev.as_mut().next().unchecked_unwrap()};
+            let mut prev = unsafe{self.tail.unwrap_unchecked()};
+            while unsafe{prev.as_mut().next().unwrap_unchecked()} != ptr {
+                prev = unsafe{prev.as_mut().next().unwrap_unchecked()};
             }
             unsafe{prev.as_mut().set_next(obj.next())};
-            if unsafe{self.tail.unchecked_unwrap()} == ptr {
+            if unsafe{self.tail.unwrap_unchecked()} == ptr {
                 self.tail = Some(prev);
             }
         }
