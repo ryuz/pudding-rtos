@@ -23,7 +23,7 @@ pub mod cpu;
 pub use cpu::*;
 
 pub mod context;
-//pub use context::*;
+pub use context::*;
 
 pub mod system;
 pub use system::*;

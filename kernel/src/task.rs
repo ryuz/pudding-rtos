@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use core::ptr;
-
+use core::ptr::NonNull;
 use crate::context::*;
 use crate::priority_queue::*;
 use crate::system::*;
@@ -61,7 +61,10 @@ mod ready_queue {
 
     pub(crate) fn is_attached(task: &Task) -> bool
     {
-        task.queue == unsafe{&mut READY_QUEUE as *mut TaskQueue}
+//        if task.queue.is_none() {false} else {
+//        task.queue.unwrap().as_ptr() == unsafe{&mut READY_QUEUE as *mut TaskQueue}}
+
+        task.queue == Some(unsafe{NonNull::new_unchecked(&mut READY_QUEUE as *mut TaskQueue)})
     }
 }
 
@@ -126,8 +129,8 @@ impl Timeout {
 // Task control block
 pub struct Task {
     context: crate::context::Context,
-    queue: *mut TaskQueue,
-    next: *mut Task,
+    queue: Option<NonNull<TaskQueue>>,
+    next: Option<NonNull<Task>>,
     priority: Priority,
     task: Option<fn(isize)>,
     exinf: isize,
@@ -141,8 +144,8 @@ impl Task {
     pub const fn new() -> Self {
         Task {
             context: Context::new(),
-            queue: core::ptr::null_mut(),
-            next: core::ptr::null_mut(),
+            queue: None,
+            next: None,
             priority: 0,
             task: None,
             exinf: 0,
@@ -195,7 +198,7 @@ impl Task {
 
     pub(crate) fn is_attached_to_any_queue(&self) -> bool
     {
-        self.queue != ptr::null_mut()
+        self.queue != None
     }
 
     pub(crate) fn is_attached_to_wait_queue(&self) -> bool
@@ -222,13 +225,14 @@ impl Task {
     }
 
     pub(crate) fn detach_from_queue(&mut self) {
-        if self.queue != ptr::null_mut() {
-            let que = unsafe { &mut *self.queue };
-            que.remove(self);
-            self.queue = ptr::null_mut();
+        match self.queue {
+            Some(mut que) => {
+                    unsafe { que.as_mut().remove(self); }
+                },
+            _ => {},
         }
     }
-
+    
     pub(crate) fn attach_to_timeout(&mut self, time: RelTime) {
         debug_assert_eq!(self.timeout.prev, ptr::null_mut());
         timeout_queue::attach(self, time);
@@ -253,8 +257,7 @@ impl Task {
     pub fn activate(&mut self) {
         let _sc = SystemCall::new();
         self.actcnt += 1;
-        if self.queue == ptr::null_mut() {
-            // READY_QUEUE.insert_priority_order(self);
+        if self.queue.is_none() {
             self.attach_to_ready_queue();
             set_dispatch_reserve_flag();
         }
@@ -262,20 +265,20 @@ impl Task {
 }
 
 impl PriorityObject<Task, Priority> for Task {
-    fn next(&self) -> *mut Task {
+    fn next(&self) -> Option<NonNull<Task>> {
         self.next
     }
-    fn set_next(&mut self, next: *mut Task) {
+    fn set_next(&mut self, next: Option<NonNull<Task>>) {
         self.next = next;
     }
     fn priority(&self) -> Priority {
         self.priority
     }
-    fn queue(&self) -> *mut TaskQueue {
+    fn queue(&self) -> Option<NonNull<TaskQueue>> {
         self.queue
     }
 
-    fn set_queue(&mut self, que: *mut TaskQueue) {
+    fn set_queue(&mut self, que: Option<NonNull<TaskQueue>>) {
         self.queue = que;
     }
 
