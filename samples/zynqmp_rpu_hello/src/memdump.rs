@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+
+// デバッグ用にメモリダンプしたいとき用
 pub fn memdump(addr: usize, len: usize) {
     unsafe {
         for offset in 0..len {
@@ -16,3 +18,4 @@ pub fn memdump(addr: usize, len: usize) {
         }
     }
 }
+

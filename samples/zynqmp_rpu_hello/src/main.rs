@@ -88,7 +88,7 @@ pub unsafe extern "C" fn main() -> ! {
     pl390.icd_enable();
 
     timer::timer_initialize(timer_int_handler);
-
+    
     wait(100);
     //      println!("timer:{}", timer::timer_get_counter_value());
 

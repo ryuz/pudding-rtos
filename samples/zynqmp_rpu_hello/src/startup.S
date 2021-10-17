@@ -68,7 +68,7 @@ _rst_handler:
                 mvn     r1, #0x2000
                 and     r0, r0, r1
                 mcr     p15, 0, r0, c1, c0, 0
-
+                
                 /* Disable DBWR for errata 780125 */
                 mrc     p15, 0, r0, c1, c0, 1       /* Read ACTLR */
                 orr     r0, r0, #0x1 << 14          /* Disable DBWR for errata 780125 */
