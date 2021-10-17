@@ -30,6 +30,10 @@ pub(crate) fn current_task() -> Option<&'static mut Task> {
     ready_queue::front() // レディーキューの先頭を実行中タスクとする
 }
 
+pub(crate) fn detach_current_task() -> Option<&'static mut Task> {
+    ready_queue::pop_front() // レディーキューの先頭を実行中タスクとする
+}
+
 mod ready_queue {
     use super::*;
 
@@ -37,6 +41,10 @@ mod ready_queue {
 
     pub(crate) fn front() -> Option<&'static mut Task> {
         unsafe { READY_QUEUE.front() }
+    }
+
+    pub(crate) fn pop_front() -> Option<&'static mut Task> {
+        unsafe { READY_QUEUE.pop_front() }
     }
 
     pub(crate) fn attach(task: &mut Task) {
@@ -50,7 +58,13 @@ mod ready_queue {
             READY_QUEUE.remove(task);
         }
     }
+
+    pub(crate) fn is_attached(task: &Task) -> bool
+    {
+        task.queue == unsafe{&mut READY_QUEUE as *mut TaskQueue}
+    }
 }
+
 
 // ---------------------------------
 //  Timeout Queue
@@ -77,6 +91,11 @@ mod timeout_queue {
         unsafe {
             TIME_QUEUE.remove(task);
         }
+    }
+
+    pub(crate) fn is_attached(task: &Task) -> bool
+    {
+        task.timeout.prev != ptr::null_mut()
     }
 }
 
@@ -114,6 +133,7 @@ pub struct Task {
     exinf: isize,
     actcnt: ActCount,
     timeout: Timeout,
+    result: Result<(), Error>,
 }
 
 impl Task {
@@ -128,6 +148,7 @@ impl Task {
             exinf: 0,
             actcnt: 0,
             timeout: Timeout::new(),
+            result: Ok(()),
         }
     }
 
@@ -158,11 +179,38 @@ impl Task {
         self.context.create(stack, task_entry, task_ptr as isize);
     }
 
+    pub(crate) fn result(&self) -> Result<(), Error> {
+        self.result
+    }
+
+    pub(crate) fn is_attached_to_ready_queue(&self) -> bool
+    {
+        ready_queue::is_attached(self)
+    }
+
+    pub(crate) fn is_attached_to_timeout(&self) -> bool
+    {
+        timeout_queue::is_attached(self)
+    }
+
+    pub(crate) fn is_attached_to_any_queue(&self) -> bool
+    {
+        self.queue != ptr::null_mut()
+    }
+
+    pub(crate) fn is_attached_to_wait_queue(&self) -> bool
+    {
+        !self.is_attached_to_ready_queue() && self.is_attached_to_any_queue()
+    }
+
     pub(crate) fn attach_to_ready_queue(&mut self) {
+        debug_assert!(!self.is_attached_to_timeout());
+        debug_assert!(!self.is_attached_to_any_queue());
         ready_queue::attach(self);
     }
 
     pub(crate) fn attach_to_queue(&mut self, que: &mut TaskQueue, order: Order) {
+        debug_assert!(!self.is_attached_to_any_queue());
         match order {
             Order::Priority => {
                 que.insert_priority_order(self);
@@ -259,6 +307,7 @@ impl TimeoutObject<Task, RelTime> for Task {
     fn timeout(&mut self) {
         self.detach_from_queue();
         self.attach_to_ready_queue();
+        self.result = Err(Error::Timeout);
         set_dispatch_reserve_flag();
     }
 

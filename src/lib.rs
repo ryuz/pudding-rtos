@@ -14,6 +14,11 @@ pub enum Order {
     Fifo,
 }
 
+#[derive(Clone, Copy)]
+pub enum Error {
+    Timeout,
+}
+
 pub mod cpu;
 pub use cpu::*;
 
