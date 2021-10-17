@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 
 use core::marker::PhantomData;
-use core::ptr;
+use core::ptr::NonNull;
 use num::Integer;
+use unchecked_unwrap::UncheckedUnwrap;
 
 pub trait PriorityObject<OBJ, PRI>
 where
@@ -10,10 +11,10 @@ where
     PRI: Integer,
 {
     fn priority(&self) -> PRI;
-    fn queue(&self) -> *mut PriorityQueue<OBJ, PRI>;
-    fn set_queue(&mut self, que: *mut PriorityQueue<OBJ, PRI>);
-    fn next(&self) -> *mut OBJ;
-    fn set_next(&mut self, next: *mut OBJ);
+    fn queue(&self) -> Option<NonNull<PriorityQueue<OBJ, PRI>>>;
+    fn set_queue(&mut self, que: Option<NonNull<PriorityQueue<OBJ, PRI>>>);
+    fn next(&self) -> Option<NonNull<OBJ>>;
+    fn set_next(&mut self, next: Option<NonNull<OBJ>>);
     fn queue_dropped(&mut self);
 }
 
@@ -22,9 +23,10 @@ where
     OBJ: PriorityObject<OBJ, PRI>,
     PRI: Integer,
 {
-    tail: *mut OBJ,
+    tail: Option<NonNull<OBJ>>,
     _marker: PhantomData<PRI>,
 }
+
 
 impl<OBJ, PRI> PriorityQueue<OBJ, PRI>
 where
@@ -33,132 +35,139 @@ where
 {
     pub const fn new() -> Self {
         PriorityQueue::<OBJ, PRI> {
-            tail: ptr::null_mut(),
+            tail: None,
             _marker: PhantomData,
         }
     }
 
     /// 優先度順で追加
     pub fn insert_priority_order(&mut self, obj: &mut OBJ) {
-        debug_assert_eq!(obj.queue(), ptr::null_mut());
-        obj.set_queue(self as *mut Self);
+        debug_assert_eq!(obj.queue(), None);
+        obj.set_queue(Some(unsafe{ NonNull::new_unchecked(self as *mut Self) }));
 
-        // 生ポインタ化
-        let ptr: *mut OBJ = obj as *mut OBJ;
+        // ポインタ化
+        let ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
 
-        if self.tail == ptr::null_mut() {
-            // キューにタスクが無ければ先頭に設定
-            obj.set_next(ptr);
-            self.tail = ptr;
-        } else {
-            // キューが空でないなら挿入位置を探索
-            // タスク優先度を取得
-            let pri = obj.priority();
+        match self.tail {
+            None => {
+                // キューにタスクが無ければ先頭に設定
+                obj.set_next(Some(ptr));
+                self.tail = Some(ptr);
+            },
+            Some(tail) => {
+                // キューが空でないなら挿入位置を探索
+                // タスク優先度を取得
+                let pri = obj.priority();
+                
+                // 先頭から探索
+                let mut prev = tail;
+                let mut next = unsafe { prev.as_mut().next().unchecked_unwrap() };
+                loop {
+                    // 優先度取り出し
+                    let next_pri = unsafe { next.as_ref().priority() };
 
-            // 先頭から探索
-            let mut prev = self.tail;
-            let mut next = unsafe { &*prev }.next();
-            loop {
-                // 優先度取り出し
-                let next_pri = unsafe { &*next }.priority();
+                    if next_pri > pri {
+                        break;
+                    }
 
-                if next_pri > pri {
-                    break;
+                    // 次を探す
+                    prev = next;
+                    next = unsafe { prev.as_mut().next().unchecked_unwrap() };
+
+                    // 末尾なら抜ける
+                    if prev == tail {
+                        self.tail = Some(ptr);
+                        break;
+                    }
                 }
 
-                // 次を探す
-                prev = next;
-                next = unsafe { &*prev }.next();
-
-                // 末尾なら抜ける
-                if prev == self.tail {
-                    self.tail = ptr;
-                    break;
-                }
+                // 挿入
+                unsafe { prev.as_mut().set_next(Some(ptr)); }
+                obj.set_next(Some(next));
             }
-
-            // 挿入
-            unsafe { &mut *prev }.set_next(ptr);
-            obj.set_next(next);
         }
     }
+    
 
     /// FIFO順で追加
     pub fn push_back(&mut self, obj: &mut OBJ) {
-        debug_assert_eq!(obj.queue(), ptr::null_mut());
-        obj.set_queue(self as *mut Self);
+        debug_assert_eq!(obj.queue(), None);
+        obj.set_queue(Some(unsafe{ NonNull::new_unchecked(self as *mut Self) }));
 
-        // 生ポインタ化
-        let ptr = obj as *mut OBJ;
+        // ポインタ化
+        let ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
 
-        if self.tail == ptr::null_mut() {
-            // キューにタスクが無ければ先頭に設定
-            obj.set_next(ptr);
-        } else {
-            // キューが空でないなら末尾に追加
-            let tail_obj = unsafe { &mut *self.tail };
-            obj.set_next(tail_obj.next());
-            tail_obj.set_next(ptr);
+        match self.tail {
+            None => {
+                // キューにタスクが無ければ先頭に設定
+                obj.set_next(Some(ptr));
+            },
+            Some(mut tail_ptr) => {
+                // キューが空でないなら末尾に追加
+                obj.set_next(unsafe{tail_ptr.as_mut().next()});
+                unsafe{ tail_ptr.as_mut().set_next(Some(ptr)); }
+            }
         }
-        self.tail = ptr;
+        self.tail = Some(ptr);
     }
 
     /// 先頭を参照
     pub fn front(&mut self) -> Option<&mut OBJ> {
-        if self.tail == ptr::null_mut() {
-            None
-        } else {
-            let obj = unsafe { &mut *self.tail };
-            Some(unsafe { &mut *obj.next() })
+        match self.tail {
+            None => { None },
+            Some(mut tail_ptr) => {
+                Some(unsafe{tail_ptr.as_mut().next().unchecked_unwrap().as_mut()})
+            }
         }
     }
 
     /// 先頭を取り出し
     pub fn pop_front<'a, 'b>(&'a mut self) -> Option<&'b mut OBJ> {
-        if self.tail == ptr::null_mut() {
-            None
-        } else {
-            let obj_tail = unsafe { &mut *self.tail };
-            let obj_head = unsafe { &mut *obj_tail.next() };
-            if self.tail == obj_tail.next() {
-                self.tail = ptr::null_mut();
-            } else {
-                obj_tail.set_next(obj_head.next());
+        match self.tail {
+            None => {None},
+            Some(mut tail) => {
+                let obj_tail = unsafe { tail.as_mut() };
+                let obj_head = unsafe { obj_tail.next().unchecked_unwrap().as_mut() };
+                if self.tail == obj_tail.next() {
+                    self.tail = None;
+                } else {
+                    obj_tail.set_next(obj_head.next());
+                }
+                obj_head.set_queue(None);
+                Some(obj_head)
             }
-            obj_head.set_queue(ptr::null_mut());
-            Some(obj_head)
         }
     }
+
 
     // 接続位置で時間が変わるので注意
     // 先頭しか外さない or タスク数を制約するなどで時間保証可能
     // 双方向リストする手はあるので、大量タスクを扱うケースが出たら考える
     pub fn remove(&mut self, obj: &mut OBJ) {
-        debug_assert_eq!(obj.queue(), self as *mut Self);
+        debug_assert_eq!(obj.queue().unwrap().as_ptr(), self as *mut Self);
 
-        // 生ポインタ化
-        let ptr = obj as *mut OBJ;
+        // ポインタ化
+        let ptr = unsafe{NonNull::new_unchecked(obj as *mut OBJ)};
 
         // 接続位置を探索
-        if obj.next() == ptr {
+        let next = unsafe{obj.next().unchecked_unwrap()};
+        if next == ptr {
             /* last one */
-            self.tail = ptr::null_mut();
+            self.tail = None;
         } else {
-            let mut prev_ptr = self.tail;
-            let mut prev_obj = unsafe { &mut *prev_ptr };
-            while prev_obj.next() != ptr {
-                prev_ptr = prev_obj.next();
-                prev_obj = unsafe { &mut *prev_ptr };
+            let mut prev = unsafe{self.tail.unchecked_unwrap()};
+            while unsafe{prev.as_mut().next().unchecked_unwrap()} != ptr {
+                prev = unsafe{prev.as_mut().next().unchecked_unwrap()};
             }
-            prev_obj.set_next(obj.next());
-            if self.tail == ptr {
-                self.tail = prev_ptr;
+            unsafe{prev.as_mut().set_next(obj.next())};
+            if unsafe{self.tail.unchecked_unwrap()} == ptr {
+                self.tail = Some(prev);
             }
         }
 
         // 取り外し
-        obj.set_next(ptr::null_mut());
-        obj.set_queue(ptr::null_mut());
+        obj.set_next(None);
+        obj.set_queue(None);
     }
 }
 
@@ -175,41 +184,42 @@ where
     }
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     struct TestObject {
         id: i32,
-        next: *mut TestObject,
-        que: *mut PriorityQueue<TestObject, i32>,
+        next: Option<NonNull<TestObject>>,
+        que: Option<NonNull<PriorityQueue<TestObject, i32>>>,
     }
 
     impl TestObject {
         const fn new(id: i32) -> Self {
             TestObject {
                 id: id,
-                next: ptr::null_mut(),
-                que: ptr::null_mut(),
+                next: None,
+                que: None,
             }
         }
     }
 
     impl PriorityObject<TestObject, i32> for TestObject {
-        fn next(&self) -> *mut TestObject {
+        fn next(&self) -> Option<NonNull<TestObject>> {
             self.next
         }
-        fn set_next(&mut self, next: *mut TestObject) {
+        fn set_next(&mut self, next: Option<NonNull<TestObject>>) {
             self.next = next;
         }
         fn priority(&self) -> i32 {
             self.id
         }
-        fn queue(&self) -> *mut PriorityQueue<TestObject, i32> {
+        fn queue(&self) -> Option<NonNull<PriorityQueue<TestObject, i32>>> {
             self.que
         }
 
-        fn set_queue(&mut self, que: *mut PriorityQueue<TestObject, i32>) {
+        fn set_queue(&mut self, que: Option<NonNull<PriorityQueue<TestObject, i32>>>) {
             self.que = que;
         }
 
@@ -242,11 +252,11 @@ mod tests {
             // 削除パターン1
             que.push_back(&mut obj0);
             que.push_back(&mut obj1);
-            assert_eq!(que.tail, &mut obj1 as *mut TestObject);
+            assert_eq!(que.tail.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
             que.remove(&mut obj0);
-            assert_eq!(que.tail, &mut obj1 as *mut TestObject);
+            assert_eq!(que.tail.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
             que.remove(&mut obj1);
-            assert_eq!(que.tail, ptr::null_mut());
+            assert_eq!(que.tail, None);
 
             let t0 = que.pop_front();
             assert_eq!(t0.is_some(), false);
@@ -256,11 +266,11 @@ mod tests {
             // 削除パターン2
             que.push_back(&mut obj0);
             que.push_back(&mut obj1);
-            assert_eq!(que.tail, &mut obj1 as *mut TestObject);
+            assert_eq!(que.tail.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
             que.remove(&mut obj1);
-            assert_eq!(que.tail, &mut obj0 as *mut TestObject);
+            assert_eq!(que.tail.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
             que.remove(&mut obj0);
-            assert_eq!(que.tail, ptr::null_mut());
+            assert_eq!(que.tail, None);
 
             let t0 = que.pop_front();
             assert_eq!(t0.is_some(), false);
