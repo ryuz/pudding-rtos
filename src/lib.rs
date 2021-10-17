@@ -4,7 +4,6 @@
 #![feature(const_fn_trait_bound)]
 #![feature(const_fn_fn_ptr_basics)]
 
-
 pub type Priority = u32;
 pub type RelTime = u32;
 pub type ActCount = u32;
