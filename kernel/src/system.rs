@@ -83,6 +83,7 @@ pub(crate) fn clear_dispatch_reserve_flag() {
 
 pub(crate) unsafe fn enter_system_call() {
     cpu_lock();
+    // (注) もしマルチプロセッサやる場合はここにメモリバリアも入れる
 }
 
 pub(crate) unsafe fn leave_system_call() {
@@ -90,6 +91,7 @@ pub(crate) unsafe fn leave_system_call() {
         && !test_interrupt_flag()
         && !test_dispatch_disable_flag()
         && !test_cpu_lock_flag()
+    // (注) もしマルチプロセッサやる場合はここにメモリバリアも入れる
     {
         clear_dispatch_reserve_flag();
         task_switch();
