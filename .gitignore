@@ -5,3 +5,5 @@
 
 .vscode/
 target/
+
+tarpaulin-report.html

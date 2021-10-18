@@ -1,5 +1,10 @@
 #![allow(dead_code)]
 
+// ひとまず単方向キュー
+// 取り外しが遅いのでそのうち双方向も考える
+// タスク数が増えたらバランス木の類で O(logN) とかも考えるべきかもだけど
+// そんな重量級のシステムは一旦スコープ外
+
 use core::marker::PhantomData;
 use core::ptr::NonNull;
 use num::Integer;

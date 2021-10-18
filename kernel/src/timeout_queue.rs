@@ -146,7 +146,9 @@ where
     // タイムアウトにタイムティック供給
     pub(crate) fn sig_tim(&mut self, tictim: RELTIM) {
         match self.head {
-            None => return,
+            None => {
+                return;
+            }
             Some(mut ptr) => {
                 let mut tictim = tictim;
                 // タイムアウトキューの処理
@@ -265,196 +267,236 @@ mod tests {
     }
 
     #[test]
-    fn test_queue_001() {
-        let mut que = TimeoutQueue::<TestObject, i32>::new();
-        let mut obj0 = TestObject::new(0);
-        let mut obj1 = TestObject::new(1);
-        let mut obj2 = TestObject::new(2);
+    fn test_queue() {
+        {
+            let mut que = TimeoutQueue::<TestObject, i32>::new();
+            let mut obj0 = TestObject::new(0);
+            let mut obj1 = TestObject::new(1);
+            let mut obj2 = TestObject::new(2);
 
-        // 単純追加＆時間経過
-        unsafe {
-            TEST_TIME = 0;
-        };
-        que.add(&mut obj0, 3);
-        assert_eq!(que.head.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
-        que.add(&mut obj1, 1);
-        assert_eq!(que.head.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
-        assert_eq!(obj1.next.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
-        assert_eq!(obj1.prev.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.next.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
-        assert_eq!(obj0.prev.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+            // 単純追加＆時間経過
+            unsafe {
+                TEST_TIME = 0;
+            };
+            que.add(&mut obj0, 3);
+            assert_eq!(que.head.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+            que.add(&mut obj1, 1);
+            assert_eq!(que.head.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+            assert_eq!(obj1.next.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+            assert_eq!(obj1.prev.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+            assert_eq!(obj0.next.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+            assert_eq!(obj0.prev.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
 
-        que.add(&mut obj2, 4);
-        assert_eq!(que.head.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
-        assert_eq!(obj1.next.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.next.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
-        assert_eq!(obj2.next.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
-        assert_eq!(obj1.prev.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
-        assert_eq!(obj2.prev.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.prev.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+            que.add(&mut obj2, 4);
+            assert_eq!(que.head.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+            assert_eq!(obj1.next.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+            assert_eq!(obj0.next.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
+            assert_eq!(obj2.next.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
+            assert_eq!(obj1.prev.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
+            assert_eq!(obj2.prev.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+            assert_eq!(obj0.prev.unwrap().as_ptr(), &mut obj1 as *mut TestObject);
 
-        unsafe {
-            TEST_TIME += 1;
-        };
-        que.sig_tim(1);
-        assert_eq!(obj0.time, 0);
-        assert_eq!(obj1.time, 1);
-        assert_eq!(obj2.time, 0);
-        assert_eq!(que.head.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.next.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
-        assert_eq!(obj2.next.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
-        assert_eq!(obj0.prev.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
-        assert_eq!(obj2.prev.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
-
-        unsafe {
-            TEST_TIME += 1;
-        };
-        que.sig_tim(1);
-        assert_eq!(obj0.time, 0);
-        assert_eq!(obj1.time, 1);
-        assert_eq!(obj2.time, 0);
-
-        unsafe {
-            TEST_TIME += 1;
-        };
-        que.sig_tim(1);
-        assert_eq!(obj0.time, 3);
-        assert_eq!(obj1.time, 1);
-        assert_eq!(obj2.time, 0);
-
-        unsafe {
-            TEST_TIME += 1;
-        };
-        que.sig_tim(1);
-        assert_eq!(obj0.time, 3);
-        assert_eq!(obj1.time, 1);
-        assert_eq!(obj2.time, 4);
-
-        unsafe {
-            TEST_TIME += 1;
-        };
-        que.sig_tim(1);
-        assert_eq!(obj0.time, 3);
-        assert_eq!(obj1.time, 1);
-        assert_eq!(obj2.time, 4);
-        assert_eq!(que.head, None);
-        assert_eq!(obj0.prev, None);
-        assert_eq!(obj1.prev, None);
-        assert_eq!(obj2.prev, None);
-    }
-
-    #[test]
-    fn test_queue_002() {
-        let mut que = TimeoutQueue::<TestObject, i32>::new();
-        let mut obj0 = TestObject::new(0);
-        let mut obj1 = TestObject::new(1);
-        let mut obj2 = TestObject::new(2);
-
-        // 一括時間経過
-        unsafe {
-            TEST_TIME = 0;
-        };
-        que.add(&mut obj0, 3);
-        que.add(&mut obj1, 1);
-        que.add(&mut obj2, 4);
-
-        unsafe {
-            TEST_TIME += 4;
-        };
-        que.sig_tim(4);
-        assert_eq!(obj0.time, 4);
-        assert_eq!(obj1.time, 4);
-        assert_eq!(obj2.time, 4);
-        assert_eq!(que.head, None);
-        assert_eq!(obj0.prev, None);
-        assert_eq!(obj1.prev, None);
-        assert_eq!(obj2.prev, None);
-    }
-
-    #[test]
-    fn test_queue_003() {
-        let mut que = TimeoutQueue::<TestObject, i32>::new();
-        let mut obj0 = TestObject::new(0);
-        let mut obj1 = TestObject::new(1);
-        let mut obj2 = TestObject::new(2);
-
-        // 先頭削除
-        unsafe {
-            TEST_TIME = 0;
-        };
-        que.add(&mut obj0, 3);
-        que.add(&mut obj1, 1);
-        que.add(&mut obj2, 4);
-
-        que.remove(&mut obj1);
-
-        for _ in 0..5 {
             unsafe {
                 TEST_TIME += 1;
             };
             que.sig_tim(1);
-        }
-        assert_eq!(obj0.time, 3);
-        assert_eq!(obj1.time, 0);
-        assert_eq!(obj2.time, 4);
-    }
+            assert_eq!(obj0.time, 0);
+            assert_eq!(obj1.time, 1);
+            assert_eq!(obj2.time, 0);
+            assert_eq!(que.head.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+            assert_eq!(obj0.next.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
+            assert_eq!(obj2.next.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
+            assert_eq!(obj0.prev.unwrap().as_ptr(), &mut obj2 as *mut TestObject);
+            assert_eq!(obj2.prev.unwrap().as_ptr(), &mut obj0 as *mut TestObject);
 
-    #[test]
-    fn test_queue_004() {
-        let mut que = TimeoutQueue::<TestObject, i32>::new();
-        let mut obj0 = TestObject::new(0);
-        let mut obj1 = TestObject::new(1);
-        let mut obj2 = TestObject::new(2);
-
-        // 中間削除
-        unsafe {
-            TEST_TIME = 0;
-        };
-        que.add(&mut obj0, 3);
-        que.add(&mut obj1, 1);
-        que.add(&mut obj2, 4);
-
-        que.remove(&mut obj0);
-
-        for _ in 0..5 {
             unsafe {
                 TEST_TIME += 1;
             };
             que.sig_tim(1);
-        }
-        assert_eq!(obj0.time, 0);
-        assert_eq!(obj1.time, 1);
-        assert_eq!(obj2.time, 4);
-    }
+            assert_eq!(obj0.time, 0);
+            assert_eq!(obj1.time, 1);
+            assert_eq!(obj2.time, 0);
 
-    #[test]
-    fn test_queue_005() {
-        let mut que = TimeoutQueue::<TestObject, i32>::new();
-        let mut obj0 = TestObject::new(0);
-        let mut obj1 = TestObject::new(1);
-        let mut obj2 = TestObject::new(2);
-
-        // 末尾削除
-        unsafe {
-            TEST_TIME = 0;
-        };
-        que.add(&mut obj0, 3);
-        que.add(&mut obj1, 1);
-        que.add(&mut obj2, 4);
-
-        que.remove(&mut obj2);
-
-        for _ in 0..5 {
             unsafe {
                 TEST_TIME += 1;
             };
             que.sig_tim(1);
+            assert_eq!(obj0.time, 3);
+            assert_eq!(obj1.time, 1);
+            assert_eq!(obj2.time, 0);
+
+            unsafe {
+                TEST_TIME += 1;
+            };
+            que.sig_tim(1);
+            assert_eq!(obj0.time, 3);
+            assert_eq!(obj1.time, 1);
+            assert_eq!(obj2.time, 4);
+
+            unsafe {
+                TEST_TIME += 1;
+            };
+            que.sig_tim(1);
+            assert_eq!(obj0.time, 3);
+            assert_eq!(obj1.time, 1);
+            assert_eq!(obj2.time, 4);
+            assert_eq!(que.head, None);
+            assert_eq!(obj0.prev, None);
+            assert_eq!(obj1.prev, None);
+            assert_eq!(obj2.prev, None);
+
+            que.sig_tim(1);
+            que.sig_tim(1);
         }
-        assert_eq!(obj0.time, 3);
-        assert_eq!(obj1.time, 1);
-        assert_eq!(obj2.time, 0);
+
+        {
+            let mut que = TimeoutQueue::<TestObject, i32>::new();
+            let mut obj0 = TestObject::new(0);
+            let mut obj1 = TestObject::new(1);
+            let mut obj2 = TestObject::new(2);
+
+            // 一括時間経過
+            unsafe {
+                TEST_TIME = 0;
+            };
+            que.add(&mut obj0, 3);
+            que.add(&mut obj1, 1);
+            que.add(&mut obj2, 4);
+
+            unsafe {
+                TEST_TIME += 4;
+            };
+            que.sig_tim(4);
+            assert_eq!(obj0.time, 4);
+            assert_eq!(obj1.time, 4);
+            assert_eq!(obj2.time, 4);
+            assert_eq!(que.head, None);
+            assert_eq!(obj0.prev, None);
+            assert_eq!(obj1.prev, None);
+            assert_eq!(obj2.prev, None);
+        }
+
+        {
+            let mut que = TimeoutQueue::<TestObject, i32>::new();
+            let mut obj0 = TestObject::new(0);
+            let mut obj1 = TestObject::new(1);
+            let mut obj2 = TestObject::new(2);
+
+            // 先頭削除
+            unsafe {
+                TEST_TIME = 0;
+            };
+            que.add(&mut obj0, 3);
+            que.add(&mut obj1, 1);
+            que.add(&mut obj2, 4);
+
+            que.remove(&mut obj1);
+
+            for _ in 0..5 {
+                unsafe {
+                    TEST_TIME += 1;
+                };
+                que.sig_tim(1);
+            }
+            assert_eq!(obj0.time, 3);
+            assert_eq!(obj1.time, 0);
+            assert_eq!(obj2.time, 4);
+        }
+
+        {
+            let mut que = TimeoutQueue::<TestObject, i32>::new();
+            let mut obj0 = TestObject::new(0);
+            let mut obj1 = TestObject::new(1);
+            let mut obj2 = TestObject::new(2);
+
+            // 中間削除
+            unsafe {
+                TEST_TIME = 0;
+            };
+            que.add(&mut obj0, 3);
+            que.add(&mut obj1, 1);
+            que.add(&mut obj2, 4);
+
+            que.remove(&mut obj0);
+
+            for _ in 0..5 {
+                unsafe {
+                    TEST_TIME += 1;
+                };
+                que.sig_tim(1);
+            }
+            assert_eq!(obj0.time, 0);
+            assert_eq!(obj1.time, 1);
+            assert_eq!(obj2.time, 4);
+        }
+
+        {
+            let mut que = TimeoutQueue::<TestObject, i32>::new();
+            let mut obj0 = TestObject::new(0);
+            let mut obj1 = TestObject::new(1);
+            let mut obj2 = TestObject::new(2);
+
+            // 末尾削除
+            unsafe {
+                TEST_TIME = 0;
+            };
+            que.add(&mut obj0, 3);
+            que.add(&mut obj1, 1);
+            que.add(&mut obj2, 4);
+
+            que.remove(&mut obj2);
+
+            for _ in 0..5 {
+                unsafe {
+                    TEST_TIME += 1;
+                };
+                que.sig_tim(1);
+            }
+            assert_eq!(obj0.time, 3);
+            assert_eq!(obj1.time, 1);
+            assert_eq!(obj2.time, 0);
+        }
+
+        {
+            let mut que = TimeoutQueue::<TestObject, i32>::new();
+            let mut obj0 = TestObject::new(0);
+            let mut obj1 = TestObject::new(1);
+            // 末尾削除
+            unsafe {
+                TEST_TIME = 0;
+            };
+            que.add(&mut obj0, 3);
+            que.add(&mut obj1, 1);
+            que.remove(&mut obj0);
+            que.remove(&mut obj1);
+            que.remove(&mut obj0);
+            que.remove(&mut obj1);
+        }
+
+        {
+            let mut obj0 = TestObject::new(0);
+            let mut obj1 = TestObject::new(1);
+            // 末尾削除
+            unsafe {
+                TEST_TIME = 0;
+            };
+            {
+                let mut que = TimeoutQueue::<TestObject, i32>::new();
+                que.add(&mut obj0, 3);
+                que.add(&mut obj1, 1);
+            }
+            assert_eq!(obj0.prev, None);
+            assert_eq!(obj1.prev, None);
+        }
+        {
+            let mut que = TimeoutQueue::<TestObject, i32>::new();
+            que.sig_tim(1);
+            que.sig_tim(2);
+            que.sig_tim(3);
+        }
     }
 
+    /*
     #[test]
     fn test_queue_static() {
         static mut QUE: TimeoutQueue<TestObject, i32> = TimeoutQueue::<TestObject, i32>::new();
@@ -478,4 +520,5 @@ mod tests {
             assert_eq!(OBJ2.time, 4);
         }
     }
+    */
 }
