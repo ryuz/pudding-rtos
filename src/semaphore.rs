@@ -43,6 +43,16 @@ impl Semaphore {
         }
     }
 
+    pub fn polling(&mut self) -> Result<(), Error> {
+        let _sc = SystemCall::new();
+        if self.count > 0 {
+            self.count -= 1;
+            Ok(())
+        } else {
+            Err(Error::Timeout)
+        }
+    }
+
     pub fn wait_with_timeout(&mut self, time: RelTime) -> Result<(), Error> {
         let _sc = SystemCall::new();
         if self.count > 0 {
