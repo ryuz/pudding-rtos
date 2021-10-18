@@ -6,6 +6,7 @@
 
 pub type Priority = u32;
 pub type RelTime = u32;
+pub type SysTime = u64;
 pub type ActCount = u32;
 pub type SemCount = u32;
 
@@ -19,7 +20,6 @@ pub enum Order {
 pub enum Error {
     Timeout,
 }
-
 
 pub mod cpu;
 pub use cpu::*;
