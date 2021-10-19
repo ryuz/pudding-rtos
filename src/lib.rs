@@ -5,10 +5,11 @@
 #![feature(const_fn_fn_ptr_basics)]
 
 pub type Priority = u32;
-pub type RelTime = u32;
-pub type SysTime = u64;
-pub type ActCount = u32;
-pub type SemCount = u32;
+pub type RelativeTime = u32;
+pub type SystemTime = u64;
+pub type ActivateCount = u32;
+pub type SemaphoreCount = u32;
+pub type FlagPattern = u32;
 
 #[derive(Clone, Copy)]
 pub enum Order {
@@ -41,6 +42,9 @@ pub use task::*;
 
 pub mod semaphore;
 pub use semaphore::*;
+
+pub mod eventflag;
+pub use eventflag::*;
 
 pub mod time;
 pub use time::*;

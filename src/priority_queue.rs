@@ -43,6 +43,10 @@ where
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.tail.is_none()
+    }
+
     /// 優先度順で追加
     pub fn insert_priority_order(&mut self, obj: &mut OBJ) {
         debug_assert_eq!(obj.queue(), None);
@@ -118,7 +122,7 @@ where
     }
 
     /// 先頭を参照
-    pub fn front(&mut self) -> Option<&mut OBJ> {
+    pub fn front<'a, 'b>(&'a mut self) -> Option<&'b mut OBJ> {
         match self.tail {
             None => None,
             Some(mut tail_ptr) => {

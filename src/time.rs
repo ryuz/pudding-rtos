@@ -1,29 +1,29 @@
 use crate::system::*;
 use crate::*;
 
-static mut SYSTEM_TIME: SysTime = 0;
+static mut SYSTEM_TIME: SystemTime = 0;
 
-pub fn supply_time_tick(tick: RelTime) {
+pub fn supply_time_tick(tick: RelativeTime) {
     let _sc = SystemCall::new();
     task::supply_time_tick_for_timeout(tick);
     unsafe {
-        SYSTEM_TIME = SYSTEM_TIME.wrapping_add(tick as SysTime);
+        SYSTEM_TIME = SYSTEM_TIME.wrapping_add(tick as SystemTime);
     }
 }
 
-pub fn set_system_time(systime: SysTime) {
+pub fn set_system_time(systime: SystemTime) {
     let _sc = SystemCall::new();
     unsafe {
         SYSTEM_TIME = systime;
     }
 }
 
-pub fn system_time() -> SysTime {
+pub fn system_time() -> SystemTime {
     let _sc = SystemCall::new();
     unsafe { SYSTEM_TIME }
 }
 
-pub fn sleep(time: RelTime) {
+pub fn sleep(time: RelativeTime) {
     if time > 0 {
         let _sc = SystemCall::new();
         let task = current_task().unwrap();
@@ -34,12 +34,12 @@ pub fn sleep(time: RelTime) {
 }
 
 pub struct Rate {
-    next_time: SysTime,
-    interval: RelTime,
+    next_time: SystemTime,
+    interval: RelativeTime,
 }
 
 impl Rate {
-    pub fn new(interval: RelTime) -> Self {
+    pub fn new(interval: RelativeTime) -> Self {
         Rate {
             next_time: system_time(),
             interval: interval,
@@ -55,9 +55,9 @@ impl Rate {
         let cur_time = system_time();
         loop {
             let sleep_time = self.next_time.wrapping_sub(cur_time);
-            self.next_time = self.next_time.wrapping_add(self.interval as SysTime);
-            if sleep_time > 0 && sleep_time <= self.interval as SysTime {
-                sleep(sleep_time as RelTime);
+            self.next_time = self.next_time.wrapping_add(self.interval as SystemTime);
+            if sleep_time > 0 && sleep_time <= self.interval as SystemTime {
+                sleep(sleep_time as RelativeTime);
                 break;
             }
         }

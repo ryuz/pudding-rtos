@@ -5,11 +5,11 @@ use crate::*;
 pub struct Semaphore {
     queue: TaskQueue,
     order: Order,
-    count: SemCount,
+    count: SemaphoreCount,
 }
 
 impl Semaphore {
-    pub const fn new(init_count: SemCount, order: Order) -> Self {
+    pub const fn new(init_count: SemaphoreCount, order: Order) -> Self {
         Semaphore {
             queue: TaskQueue::new(),
             order: order,
@@ -53,7 +53,7 @@ impl Semaphore {
         }
     }
 
-    pub fn wait_with_timeout(&mut self, time: RelTime) -> Result<(), Error> {
+    pub fn wait_with_timeout(&mut self, time: RelativeTime) -> Result<(), Error> {
         let _sc = SystemCall::new();
         if self.count > 0 {
             self.count -= 1;
