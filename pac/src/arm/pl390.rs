@@ -61,10 +61,10 @@ pub struct Pl390 {
 
 impl Pl390 {
     // 生成
-    pub fn new(icc: usize, icd: usize) -> Self {
+    pub const fn new(icc: usize, icd: usize) -> Self {
         Pl390 { icc: icc, icd: icd }
     }
-
+    
     // ベースアドレス設定
     pub fn set_base_address(&mut self, icc: usize, icd: usize) {
         self.icc = icc;
