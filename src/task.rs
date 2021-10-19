@@ -181,6 +181,10 @@ impl Task {
         self.result
     }
 
+    pub(crate) fn set_result(&mut self, result: Result<(), Error>) {
+        self.result = result;
+    }
+
     pub(crate) fn is_attached_to_ready_queue(&self) -> bool {
         ready_queue::is_attached(self)
     }

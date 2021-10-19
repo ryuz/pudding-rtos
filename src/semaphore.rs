@@ -53,17 +53,21 @@ impl Semaphore {
         }
     }
 
-    pub fn wait_with_timeout(&mut self, time: RelativeTime) -> Result<(), Error> {
-        let _sc = SystemCall::new();
-        if self.count > 0 {
-            self.count -= 1;
-            Ok(())
-        } else {
-            let task = detach_current_task().unwrap();
-            task.attach_to_queue(&mut self.queue, self.order);
-            task.attach_to_timeout(time);
-            set_dispatch_reserve_flag();
-            task.result()
+    pub fn wait_with_timeout(&mut self, time: RelativeTime) -> Result<(), Error>
+    {
+        let task = current_task().unwrap();
+        {
+            let _sc = SystemCall::new();
+            if self.count > 0 {
+                self.count -= 1;
+                task.set_result(Ok(()));
+            } else {
+                let task = detach_current_task().unwrap();
+                task.attach_to_queue(&mut self.queue, self.order);
+                task.attach_to_timeout(time);
+                set_dispatch_reserve_flag();
+            }
         }
+        task.result()
     }
 }

@@ -66,13 +66,37 @@ impl Eventflag {
         }
     }
 
-    /*
-    pub fn polling(&mut self, wait_mode: WaitFlagMode) -> Result<(), Error> {
+    
+    pub fn polling(&mut self, wait_pattern: FlagPattern, wait_mode: WaitFlagMode) -> Result<(), Error>
+    {
         let _sc = SystemCall::new();
+        assert!(self.queue.is_empty());   // TA_WSGL のみ
+        self.wait_ptn = wait_pattern;
+        self.wait_mode = wait_mode;
+        if self.is_match_pattern() {Ok(())} else {Err(Error::Timeout)}
+
     }
 
-    pub fn wait_with_timeout(&mut self, wait_mode: WaitFlagMode, time: RelativeTime) -> Result<(), Error> {
-        let _sc = SystemCall::new();
-    }
-    */
+    pub fn wait_with_timeout(&mut self, wait_pattern: FlagPattern, wait_mode: WaitFlagMode, time: RelativeTime) -> Result<(), Error>
+    {
+        let task = current_task().unwrap();
+        {
+            let _sc = SystemCall::new();
+            assert!(self.queue.is_empty());   // TA_WSGL のみ
+
+            self.wait_ptn = wait_pattern;
+            self.wait_mode = wait_mode;
+            if self.is_match_pattern() {
+                task.set_result(Ok(()));
+            }
+            else {
+                task.detach_from_queue();
+                task.attach_to_queue(&mut self.queue, Order::Fifo);
+                task.attach_to_timeout(time);
+                set_dispatch_reserve_flag();
+            }
+        }
+        task.result()
+    }    
 }
+
