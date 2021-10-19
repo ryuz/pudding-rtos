@@ -7,7 +7,7 @@ use crate::timeout_queue::*;
 use crate::*;
 
 pub(crate) type TaskQueue = PriorityQueue<Task, Priority>;
-type TimeQueue = TimeoutQueue<Task, RelTime>;
+type TimeQueue = TimeoutQueue<Task, RelativeTime>;
 
 // ---------------------------------
 //  Ready Queue
@@ -74,13 +74,13 @@ mod timeout_queue {
 
     static mut TIME_QUEUE: TimeQueue = TimeQueue::new();
 
-    pub(crate) fn sig_tim(tick: RelTime) {
+    pub(crate) fn sig_tim(tick: RelativeTime) {
         unsafe {
             TIME_QUEUE.sig_tim(tick);
         }
     }
 
-    pub(crate) fn attach(task: &mut Task, time: RelTime) {
+    pub(crate) fn attach(task: &mut Task, time: RelativeTime) {
         unsafe {
             TIME_QUEUE.add(task, time);
         }
@@ -97,7 +97,7 @@ mod timeout_queue {
     }
 }
 
-pub fn supply_time_tick_for_timeout(tick: RelTime) {
+pub fn supply_time_tick_for_timeout(tick: RelativeTime) {
     timeout_queue::sig_tim(tick);
 }
 
@@ -106,7 +106,7 @@ pub fn supply_time_tick_for_timeout(tick: RelTime) {
 // ---------------------------------
 
 struct Timeout {
-    difftim: RelTime,
+    difftim: RelativeTime,
     next: Option<NonNull<Task>>,
     prev: Option<NonNull<Task>>,
 }
@@ -129,7 +129,7 @@ pub struct Task {
     priority: Priority,
     task: Option<fn(isize)>,
     exinf: isize,
-    actcnt: ActCount,
+    actcnt: ActivateCount,
     timeout: Timeout,
     result: Result<(), Error>,
 }
@@ -224,7 +224,7 @@ impl Task {
         }
     }
 
-    pub(crate) fn attach_to_timeout(&mut self, time: RelTime) {
+    pub(crate) fn attach_to_timeout(&mut self, time: RelativeTime) {
         debug_assert_eq!(self.timeout.prev, None);
         timeout_queue::attach(self, time);
     }
@@ -275,11 +275,11 @@ impl PriorityObject<Task, Priority> for Task {
     fn queue_dropped(&mut self) {}
 }
 
-impl TimeoutObject<Task, RelTime> for Task {
-    fn difftim(&self) -> RelTime {
+impl TimeoutObject<Task, RelativeTime> for Task {
+    fn difftim(&self) -> RelativeTime {
         self.timeout.difftim
     }
-    fn set_difftim(&mut self, difftim: RelTime) {
+    fn set_difftim(&mut self, difftim: RelativeTime) {
         self.timeout.difftim = difftim;
     }
 
