@@ -99,7 +99,7 @@ pub struct Ttc {
 }
 
 impl Ttc {
-    pub fn new(address: usize) -> Self {
+    pub const fn new(address: usize) -> Self {
         Ttc { address: address }
     }
 
