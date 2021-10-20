@@ -53,6 +53,11 @@ impl Eventflag {
         }
     }
 
+    pub fn clear_flag(&mut self, pattern: FlagPattern) {
+        let _sc = SystemCall::new();
+        self.flg_ptn &= pattern;
+    }
+
     pub fn wait(&mut self, wait_pattern: FlagPattern, wait_mode: WaitFlagMode) {
         let _sc = SystemCall::new();
         assert!(self.queue.is_empty());   // TA_WSGL のみ
