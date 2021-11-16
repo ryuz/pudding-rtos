@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use jelly_pac::arm::pl390::Pl390;
+use pudding_pac::arm::pl390::Pl390;
 
 static mut PL390: Pl390 = Pl390 { icc: 0, icd: 0 };
 

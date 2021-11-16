@@ -1,5 +1,5 @@
 
-use jelly_kernel as kernel;
+use pudding_kernel as kernel;
 use kernel::*;
 
 

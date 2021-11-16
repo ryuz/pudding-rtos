@@ -2,8 +2,8 @@
 #![no_main]
 #![feature(asm)]
 
-use jelly_pac::arm::cpu;
-use jelly_pac::arm::pl390::Pl390;
+use pudding_pac::arm::cpu;
+use pudding_pac::arm::pl390::Pl390;
 
 mod bootstrap;
 

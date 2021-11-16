@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-pub use jelly_pac::arm::cpu;
-pub use jelly_pac::arm::mpu;
-pub use jelly_pac::arm::vfp;
+pub use pudding_pac::arm::cpu;
+pub use pudding_pac::arm::mpu;
+pub use pudding_pac::arm::vfp;
 
 extern "C" {
     // コンテキスト生成

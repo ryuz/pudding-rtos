@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use jelly_pac::cdns::ttc::*;
+use pudding_pac::cdns::ttc::*;
 
 // TTC0 : 0xFF110000 irq:68-70
 // TTC1 : 0xFF120000 irq:71-73

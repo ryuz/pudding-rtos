@@ -32,7 +32,7 @@ mod memdump;
 
 // use kernel::irc::pl390;
 
-use jelly_kernel as kernel;
+use pudding_kernel as kernel;
 use kernel::*;
 
 static mut STACK_INT: [u8; 4096] = [0; 4096];
@@ -67,7 +67,7 @@ pub unsafe extern "C" fn main() -> ! {
     kernel::interrupt::initialize(&mut STACK_INT);
 
     kernel::irc::pl390::initialize(0xf9001000, 0xf9000000);
-    let pl390 = jelly_kernel::irc::pl390::take();
+    let pl390 = pudding_kernel::irc::pl390::take();
 
     let targetcpu: u8 = 0x01;
     pl390.icd_disable();
