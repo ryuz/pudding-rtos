@@ -65,6 +65,17 @@ pub unsafe fn int_disable() {
     );
 }
 
+/// ソフトウェア割り込み
+pub unsafe fn svc0() { asm!("svc 0"); }
+pub unsafe fn svc1() { asm!("svc 1"); }
+pub unsafe fn svc2() { asm!("svc 2"); }
+pub unsafe fn svc3() { asm!("svc 3"); }
+pub unsafe fn svc4() { asm!("svc 4"); }
+pub unsafe fn svc5() { asm!("svc 5"); }
+pub unsafe fn svc6() { asm!("svc 6"); }
+pub unsafe fn svc7() { asm!("svc 7"); }
+
+
 /// 割り込み待ち
 pub unsafe fn wfi() -> ! {
     loop {
