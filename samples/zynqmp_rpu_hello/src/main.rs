@@ -30,19 +30,29 @@ fn debug_print(str: &str) {
 
 mod memdump;
 
-// use kernel::irc::pl390;
 
 use pudding_kernel as kernel;
 use kernel::*;
 
 static mut STACK_INT: [u8; 4096] = [0; 4096];
 
-static mut STACK0: [u8; 4096] = [0; 4096];
-static mut STACK1: [u8; 4096] = [0; 4096];
-static mut TASK0: Task = Task::new();
-static mut TASK1: Task = Task::new();
+static mut STACKS: [[u8; 4096]; 5] = [[0; 4096]; 5];
 
-static mut SEM0: Semaphore = Semaphore::new(0, Order::Fifo);
+static mut TASKS: [Task; 5] = [
+        Task::new(),
+        Task::new(),
+        Task::new(),
+        Task::new(),
+        Task::new(),
+];
+
+static mut SEMS: [Semaphore; 5] = [
+        Semaphore::new(1, Order::Fifo),
+        Semaphore::new(1, Order::Fifo),
+        Semaphore::new(1, Order::Fifo),
+        Semaphore::new(1, Order::Fifo),
+        Semaphore::new(1, Order::Fifo),
+];
 
 
 // main
@@ -90,59 +100,62 @@ pub unsafe extern "C" fn main() -> ! {
 
     timer::timer_initialize(timer_int_handler);
     
-    wait(100);
-    //      println!("timer:{}", timer::timer_get_counter_value());
+    for i in 0..5 {
+        TASKS[i].create(i as isize, dining_philosopher, 1, &mut STACKS[i]);
+        TASKS[i].activate();
+    }
 
-    TASK0.create(0, task0, 0, &mut STACK0);
-    TASK1.create(1, task1, 1, &mut STACK1);
-    TASK0.activate();
-    TASK1.activate();
-    
-    println!("Idle loop");
     kernel::idle_loop();
+}
 
-    /*
+
+// 哲学者タスク
+fn dining_philosopher(id: isize) {
+    let id = id as usize;
+    let left = id;
+    let right = (id + 1) % 5;
+
+    println!("[philosopher{}] dining start", id);
+
     loop {
-        //        kernel::cpu::cpu_unlock();
-        println!(
-            "timer:{} [s]",
-            timer::timer_get_counter_value() as f32 / 100000000.0
-        );
-        //        println!("state:{}", system::is_interrupt_state());
-        wait(1000000);
-        loop {}
-    }
-    */
-}
+        println!("[philosopher{}] thinking", id);
+        kernel::sleep(rand_time());
 
-fn task0(_exinf: isize) {
-    println!("Task0:start");
-    unsafe {
-        for _ in 0..3 {
-            println!("Task0:sleep_strat");
-            kernel::sleep(1000);
-            println!("Task0:sleep_end");
+        'dining: loop {
+            unsafe { SEMS[left].wait(); }
+            {
+                if unsafe{ SEMS[right].polling().is_ok()} {
+                    println!("[philosopher{}] eating", id);
+                    kernel::sleep(rand_time());
+                    unsafe { SEMS[left].signal(); }
+                    unsafe { SEMS[right].signal(); }
+                    break 'dining;
+                } else {
+                    unsafe { SEMS[left].signal(); }
+                }
+            }
+            println!("[philosopher{}] hungry", id);
+            kernel::sleep(rand_time());
         }
-
-        println!("Task0:signal to semaphore");
-        SEM0.signal();
-
     }
-    println!("Task0:end");
-    //    println!("state:{}", system::is_interrupt_state());
 }
 
-fn task1(_exinf: isize) {
-    println!("Task1:start");
+
+// 乱数
+const RAND_MAX: u32 = 0xffff_ffff;
+static mut RAND_SEED: u32 = 0x1234;
+fn rand() -> u32 {
     unsafe {
-        println!("Task1: wait semaphore");
-        SEM0.wait();
+        let x = RAND_SEED as u64;
+        let x = ((69069 * x + 1) & RAND_MAX as u64) as u32;
+        RAND_SEED = x;
+        x
     }
-    //    println!("state:{}", system::is_interrupt_state());
-    println!("Task1:end");
 }
 
-// static mut TIMER_COUNTER: u32 = 0;
+fn rand_time() -> u32 {
+    rand() % 1000 + 500
+}
 
 
 // タイマ割込みハンドラ
@@ -152,16 +165,5 @@ fn timer_int_handler() {
     
     // カーネルにタイムティック供給
     kernel::supply_time_tick(1);
-        
-    /*
-    unsafe{
-        TIMER_COUNTER = TIMER_COUNTER.wrapping_add(1);
-        if TIMER_COUNTER % 1000 == 0 {
-            //            println!("timer irq:{}", system::is_interrupt_state());
-            println!("timer irq");
-            TASK0.activate();
-        }
-    }
-    */
 }
 
