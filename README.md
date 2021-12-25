@@ -1,9 +1,8 @@
+# Pudding-RTOS
 
-# 組込みRust で RealTime-OS を作ってみる試み
+組込みRust で RealTime-OS 作るの楽しそうなのでやってみるというものです。
 
-組込みRust で RealTime-OS 作るの楽しそうなのでやってみる。
+主に Xilinx社の ZynqMP にある RPU(Cortex-R5) をターゲットにしております。
 
-まだ試行錯誤の残骸置き場の状態。
-
-名前はまだないが Jelly は、FPGA版のRTOSにそのまま使いたくなったので Pudding (仮) にしておきます。
+なお、現在、ZynqMP の PL(FPGA部)を使った RTOS を Jelly-RTOS として開発しております。
 
