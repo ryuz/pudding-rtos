@@ -13,17 +13,6 @@ type TimeQueue = TimeoutQueue<Task, RelativeTime>;
 //  Ready Queue
 // ---------------------------------
 
-/*
-static mut CURRENT_TASK: *mut Task = ptr::null_mut();
-
-pub(crate) fn current_task() -> Option<&'static mut Task>  {
-    unsafe {
-        let task = CURRENT_TASK;
-        if task == ptr::null_mut() {None} else {Some(&mut *task)}
-    }
-}
-*/
-
 pub(crate) fn current_task() -> Option<&'static mut Task> {
     ready_queue::front() // レディーキューの先頭を実行中タスクとする
 }
@@ -58,12 +47,10 @@ mod ready_queue {
     }
 
     pub(crate) fn is_attached(task: &Task) -> bool {
-        //        if task.queue.is_none() {false} else {
-        //        task.queue.unwrap().as_ptr() == unsafe{&mut READY_QUEUE as *mut TaskQueue}}
-
         task.queue == Some(unsafe { NonNull::new_unchecked(&mut READY_QUEUE as *mut TaskQueue) })
     }
 }
+
 
 // ---------------------------------
 //  Timeout Queue
