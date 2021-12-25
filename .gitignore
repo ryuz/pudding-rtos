@@ -1,7 +1,9 @@
 
-*.bak
-*_
-*_.*
+#*.bak
+#*_
+#*_.*
+
+*test_/
 
 .vscode/
 target/

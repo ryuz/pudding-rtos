@@ -1,6 +1,6 @@
+
 #![no_std]
 #![feature(asm)]
-#![feature(option_result_unwrap_unchecked)]
 #![feature(const_fn_trait_bound)]
 #![feature(const_fn_fn_ptr_basics)]
 
