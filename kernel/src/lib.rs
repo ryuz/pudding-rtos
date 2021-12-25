@@ -1,8 +1,9 @@
-
+#![allow(stable_features)]
 #![no_std]
 #![feature(asm)]
 #![feature(const_fn_trait_bound)]
 #![feature(const_fn_fn_ptr_basics)]
+#![feature(option_result_unwrap_unchecked)]
 
 pub type Priority = u32;
 pub type RelativeTime = u32;

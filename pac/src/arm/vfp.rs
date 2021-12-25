@@ -2,6 +2,7 @@
 #![cfg(target_arch = "arm")]
 #![cfg(target_feature = "vfp2")]
 
+
 /// VFP有効化
 pub unsafe fn enable_vfp() {
     asm!(

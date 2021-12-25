@@ -1,7 +1,13 @@
 [package]
 name = "pudding-pac"
 version = "0.1.0"
+authors = ["Ryuz <ryufuchi@gmail.com>"]
 edition = "2021"
+repository = "https://github.com/ryuz/rust_rtos"
+keywords = ["pac", "zynq", "zynqmp", "cortex-r5"]
+license = "MIT"
+
+description = "Peripheral Access Crate"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
