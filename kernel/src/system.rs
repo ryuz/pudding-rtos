@@ -1,4 +1,4 @@
-use crate::cpu::*;
+use crate::*;
 use crate::task::*;
 
 struct SystemControlBlock {

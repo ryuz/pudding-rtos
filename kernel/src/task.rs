@@ -251,7 +251,7 @@ impl Task {
     pub fn activate(&mut self) {
         let _sc = SystemCall::new();
         self.actcnt += 1;
-        if self.queue.is_none() {
+        if self.queue == None {
             self.attach_to_ready_queue();
             set_dispatch_reserve_flag();
         }

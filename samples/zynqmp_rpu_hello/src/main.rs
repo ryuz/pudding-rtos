@@ -44,6 +44,7 @@ static mut TASK1: Task = Task::new();
 
 static mut SEM0: Semaphore = Semaphore::new(0, Order::Fifo);
 
+
 // main
 #[no_mangle]
 pub unsafe extern "C" fn main() -> ! {
