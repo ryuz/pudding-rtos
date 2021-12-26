@@ -1,9 +1,9 @@
 [package]
 name = "pudding-pac"
 version = "0.1.0"
-authors = ["Ryuz <ryufuchi@gmail.com>"]
 edition = "2021"
-repository = "https://github.com/ryuz/rust_rtos"
+authors = ["Ryuz <ryufuchi@gmail.com>"]
+repository = "https://github.com/ryuz/pudding-rtos"
 keywords = ["pac", "zynq", "zynqmp", "cortex-r5"]
 license = "MIT"
 
