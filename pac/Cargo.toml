@@ -1,6 +1,6 @@
 [package]
 name = "pudding-pac"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Ryuz <ryufuchi@gmail.com>"]
 repository = "https://github.com/ryuz/pudding-rtos"
