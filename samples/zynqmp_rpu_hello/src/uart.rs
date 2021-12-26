@@ -4,8 +4,10 @@ use core::fmt::{self, Write};
 
 // const UART_BASE_ADDR   : usize = 0xff000000;    // UART0
 const UART_BASE_ADDR: usize = 0xff010000; // UART1
+
 const UART_CHANNEL_STS: usize = UART_BASE_ADDR + 0x0000002C;
 const UART_TX_RX_FIFO: usize = UART_BASE_ADDR + 0x00000030;
+
 
 // レジスタ書き込み
 fn wrtie_reg(adr: usize, data: u32) {
