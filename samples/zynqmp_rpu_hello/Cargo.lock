@@ -90,7 +90,7 @@ dependencies = [
  "bitflags",
  "cc",
  "num",
- "pudding-pac",
+ "pudding-pac 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -101,10 +101,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "pudding-pac"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40060063241388ed56a4794ee184b44b0228f3afe4407ccb8e4ad454a5b9dd6a"
+dependencies = [
+ "bitflags",
+]
+
+[[package]]
 name = "zynqmp_rpu_hello"
 version = "0.1.0"
 dependencies = [
  "cc",
  "pudding-kernel",
- "pudding-pac",
+ "pudding-pac 0.1.2",
 ]
