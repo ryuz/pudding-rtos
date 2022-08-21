@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(asm)]
+#![allow(stable_features)]
 
 use pudding_pac::arm::cpu;
 use pudding_pac::arm::pl390::Pl390;

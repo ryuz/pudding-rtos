@@ -1,44 +1,37 @@
 OUTPUT_ARCH(arm)
-ENTRY(_rst_handler)
+ENTRY(_vector_table)
 
 MEMORY
 {
-	vector : o = 0x00000000, l = 0x00000040		/* TCM-A */
-	ram0   : o = 0x00000040, l = 0x0000ffc0		/* TCM-A */
-	ram1   : o = 0x00020000, l = 0x00010000		/* TCM-B0/1 */
+	ram0   : o = 0x00000000, l = 0x00010000		/* A-TCM */
+	ram1   : o = 0x00020000, l = 0x00010000		/* B-TCM */
 }
 
 SECTIONS
 {
-	.vector :
-	{
-      	___vector = . ;
-		KEEP(*vectors.o(.text)) 
-		FILL(0xff)
-		___vector_end = . ; 
-	} > vector
+    .text :
+    {
+        . = 0x00000000;
+            ___text = . ; 
+        KEEP(*vectors.o(.text))
+        . = 0x00000040;
+        *(.text .text.* .rodata*)
+            ___text_end = . ; 
+    } > ram0
 
-	.text :
-	{
-		 ___text = . ; 
-		*(.text .text.* .rodata*)
-		 ___text_end = . ; 
-	} > ram0
-    
+    .data :
+    {
+        ___data = . ;
+        *(.data .data.*)
+        ___data_end = . ;
+    } > ram1
 
-	data :
-	{
-		___data = . ;
-		*(.data .data.*)
-		___data_end = . ;
-	} > ram1
-
-	.bss :
-	{
-		___bss = . ;
-		*(.bss .bss.*)
-		___bss_end = . ;  
-	} > ram1
+    .bss :
+    {
+        ___bss = . ;
+        *(.bss .bss.*)
+        ___bss_end = . ;  
+    } > ram1
 
     .app_stack ALIGN(0x08):
     {
@@ -49,27 +42,27 @@ SECTIONS
     .stacks ALIGN(0x08):
     {
         ___usr_stack = . ; 
-        . += 4096;
+        . += 8192;
         ___usr_stack_end = . ;
 
         ___fiq_stack = . ; 
-        . += 32;
+        . += 512;
         ___fiq_stack_end = . ;
 
         ___irq_stack = . ; 
-        . += 1024;
+        . += 512;
         ___irq_stack_end = . ;
 
         ___svc_stack = . ; 
-        . += 32;
+        . += 128;
         ___svc_stack_end = . ;
 
         ___abt_stack = . ; 
-        . += 32;
+        . += 128;
         ___abt_stack_end = . ;
 
         ___und_stack = . ; 
-        . += 32;
+        . += 128;
         ___und_stack_end = . ;
     } > ram1
 

@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![allow(stable_features)]
 #![feature(asm)]
 
 mod bootstrap;
@@ -58,9 +59,8 @@ static mut SEMS: [Semaphore; 5] = [
 // main
 #[no_mangle]
 pub unsafe extern "C" fn main() -> ! {
-    //  uart_write(0x23);
     wait(10000);
-    println!("Hello world");
+//  println!("Hello world");
 
     /*
     println!("---- ICC ----");
@@ -70,7 +70,7 @@ pub unsafe extern "C" fn main() -> ! {
     println!("-------------");
     */
 
-    println!("kernel start");
+    println!("\r\nkernel start");
 
     kernel::set_debug_print(Some(debug_print));
 

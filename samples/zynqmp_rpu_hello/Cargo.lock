@@ -86,8 +86,6 @@ dependencies = [
 [[package]]
 name = "pudding-kernel"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "775dd45754da93ae16953ec6919a9a9266629a802d735606f5c72e96a9c49b06"
 dependencies = [
  "bitflags",
  "cc",
@@ -98,8 +96,6 @@ dependencies = [
 [[package]]
 name = "pudding-pac"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9073cc2ebcf45977a5160edd5271bd23fc44fca2fbcf4e311ea3785c4c4b5f21"
 dependencies = [
  "bitflags",
 ]

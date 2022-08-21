@@ -27,7 +27,9 @@ build:
 clean:
 	cargo clean
 
-
+.PHONY: disas
+disas: build
+	arm-none-eabi-objdump -S $(TARGET_FILE) > $(BUILD_TARGET).das
 
 # run
 RUN_PROC      ?= remoteproc0

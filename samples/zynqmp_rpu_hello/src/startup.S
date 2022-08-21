@@ -4,7 +4,7 @@
 /*                                          Copyright (C) 1998-2021 by Ryuz */
 /* ------------------------------------------------------------------------ */
 
-
+                .global     _vector_table
                 .global     _rst_handler
                 .global     _und_handler
                 .global     _swi_handler
@@ -141,19 +141,18 @@ _und_handler:
                 b       _und_handler
 
 _swi_handler:   
-
                 b       _swi_handler
+
 _pre_handler:   
-
                 b       _pre_handler
+
 _abt_handler:   
-
                 b       _abt_handler
+
 _irq_handler:   
-
                 b       _irq_handler
-_fiq_handler:   
 
+_fiq_handler:   
                 b       _fiq_handler
 
 

@@ -5,6 +5,7 @@
 /* ------------------------------------------------------------------------ */
 
 
+                .global     _vector_table
                 .global     _rst_handler
                 .global     _und_handler
                 .global     _swi_handler
