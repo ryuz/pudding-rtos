@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 #![cfg(target_arch = "arm")]
 
+use core::arch::asm;
+
 // ----- cache ------
 
 /// Iキャッシュ有効化

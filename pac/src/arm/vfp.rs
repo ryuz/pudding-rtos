@@ -2,6 +2,7 @@
 #![cfg(target_arch = "arm")]
 #![cfg(target_feature = "vfp2")]
 
+use core::arch::asm;
 
 /// VFP有効化
 pub unsafe fn enable_vfp() {
@@ -39,8 +40,8 @@ pub fn vabs_f64(v: f64) ->f64 {
             r#"
                     vabs.f64    {0}, {1}
             "#,
-            out(dreg) q,
-            in(dreg) v,
+            out(dreg_low16) q,
+            in(dreg_low16) v,
         );
         q
     }
@@ -68,8 +69,8 @@ pub fn vsqrt_f64(v: f64) ->f64 {
             r#"
                     vsqrt.f64   {0}, {1}
             "#,
-            out(dreg) q,
-            in(dreg) v,
+            out(dreg_low16) q,
+            in(dreg_low16) v,
         );
         q
     }

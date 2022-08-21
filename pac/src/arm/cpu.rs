@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 #![cfg(target_arch = "arm")]
 
+use core::arch::asm;
+
 // T_Bit  0x20
 // F_Bit  0x40
 // I_Bit  0x80

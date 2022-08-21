@@ -4,6 +4,8 @@ pub use pudding_pac::arm::cpu;
 pub use pudding_pac::arm::mpu;
 pub use pudding_pac::arm::vfp;
 
+use core::arch::asm;
+
 #[repr(C)]
 struct CpuControlBlock {
     pub imask: u32, // 割り込みマスク状態

@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(stable_features)]
 #![feature(asm)]
 
 
