@@ -60,7 +60,6 @@ static mut SEMS: [Semaphore; 5] = [
 #[no_mangle]
 pub unsafe extern "C" fn main() -> ! {
     wait(10000);
-//  println!("Hello world");
 
     /*
     println!("---- ICC ----");
