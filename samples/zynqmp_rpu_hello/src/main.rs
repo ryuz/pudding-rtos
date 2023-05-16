@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 #![allow(stable_features)]
-#![feature(asm)]
+//#![feature(asm)]
 
 mod bootstrap;
 
