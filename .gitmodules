@@ -3,4 +3,4 @@
 	url = https://github.com/ryuz/pudding-pac.git
 [submodule "samples/zynqmp_rpu_hello/kernel"]
 	path = kernel
-	url = https://github.com/ryuz/pudding-kernel
+	url = https://github.com/ryuz/pudding-kernel.git

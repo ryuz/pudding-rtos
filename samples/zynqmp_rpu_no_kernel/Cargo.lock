@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "bitflags"
-version = "1.3.2"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
+checksum = "0f6b0c9ebae276e207a3e4e989ed9f3be8b7ce8728b80629c98c21d27742e6ba"
 
 [[package]]
 name = "cc"
