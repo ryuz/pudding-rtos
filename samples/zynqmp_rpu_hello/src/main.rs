@@ -31,30 +31,28 @@ fn debug_print(str: &str) {
 
 mod memdump;
 
-
-use pudding_kernel as kernel;
 use kernel::*;
+use pudding_kernel as kernel;
 
 static mut STACK_INT: [u8; 4096] = [0; 4096];
 
 static mut STACKS: [[u8; 4096]; 5] = [[0; 4096]; 5];
 
 static mut TASKS: [Task; 5] = [
-        Task::new(),
-        Task::new(),
-        Task::new(),
-        Task::new(),
-        Task::new(),
+    Task::new(),
+    Task::new(),
+    Task::new(),
+    Task::new(),
+    Task::new(),
 ];
 
 static mut SEMS: [Semaphore; 5] = [
-        Semaphore::new(1, Order::Fifo),
-        Semaphore::new(1, Order::Fifo),
-        Semaphore::new(1, Order::Fifo),
-        Semaphore::new(1, Order::Fifo),
-        Semaphore::new(1, Order::Fifo),
+    Semaphore::new(1, Order::Fifo),
+    Semaphore::new(1, Order::Fifo),
+    Semaphore::new(1, Order::Fifo),
+    Semaphore::new(1, Order::Fifo),
+    Semaphore::new(1, Order::Fifo),
 ];
-
 
 // main
 #[no_mangle]
@@ -98,7 +96,7 @@ pub unsafe extern "C" fn main() -> ! {
     pl390.icd_enable();
 
     timer::timer_initialize(timer_int_handler);
-    
+
     for i in 0..5 {
         TASKS[i].create(i as isize, dining_philosopher, 1, &mut STACKS[i]);
         TASKS[i].activate();
@@ -106,7 +104,6 @@ pub unsafe extern "C" fn main() -> ! {
 
     kernel::idle_loop();
 }
-
 
 // 哲学者タスク
 fn dining_philosopher(id: isize) {
@@ -121,16 +118,24 @@ fn dining_philosopher(id: isize) {
         kernel::sleep(rand_time());
 
         'dining: loop {
-            unsafe { SEMS[left].wait(); }
+            unsafe {
+                SEMS[left].wait();
+            }
             {
-                if unsafe{ SEMS[right].polling().is_ok()} {
+                if unsafe { SEMS[right].polling().is_ok() } {
                     println!("[philosopher{}] eating", id);
                     kernel::sleep(rand_time());
-                    unsafe { SEMS[left].signal(); }
-                    unsafe { SEMS[right].signal(); }
+                    unsafe {
+                        SEMS[left].signal();
+                    }
+                    unsafe {
+                        SEMS[right].signal();
+                    }
                     break 'dining;
                 } else {
-                    unsafe { SEMS[left].signal(); }
+                    unsafe {
+                        SEMS[left].signal();
+                    }
                 }
             }
             println!("[philosopher{}] hungry", id);
@@ -138,7 +143,6 @@ fn dining_philosopher(id: isize) {
         }
     }
 }
-
 
 // 乱数
 const RAND_MAX: u32 = 0xffff_ffff;
@@ -156,13 +160,11 @@ fn rand_time() -> u32 {
     rand() % 1000 + 500
 }
 
-
 // タイマ割込みハンドラ
 fn timer_int_handler() {
     //  割込み要因クリア
     timer::timer_clear_interrupt();
-    
+
     // カーネルにタイムティック供給
     kernel::supply_time_tick(1);
 }
-
