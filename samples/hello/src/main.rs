@@ -1,8 +1,5 @@
-
-use pudding_kernel as kernel;
 use kernel::*;
-
-
+use pudding_kernel as kernel;
 
 static mut STACK0: [u8; 4096] = [0; 4096];
 static mut STACK1: [u8; 4096] = [0; 4096];
@@ -12,7 +9,6 @@ static mut TASK1: Task = Task::new();
 
 static mut SEM0: Semaphore = Semaphore::new(0, Order::Priority);
 static mut FLG0: Eventflag = Eventflag::new(0);
-
 
 fn main() {
     println!("Start");

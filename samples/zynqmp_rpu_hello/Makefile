@@ -27,6 +27,10 @@ build:
 clean:
 	cargo clean
 
+.PHONY: fmt
+fmt:
+	cargo fmt
+
 .PHONY: disas
 disas: build
 	arm-none-eabi-objdump -S $(TARGET_FILE) > $(BUILD_TARGET).das

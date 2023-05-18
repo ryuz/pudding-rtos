@@ -32,8 +32,6 @@ sudo apt install libnewlib-arm-none-eabi
 
 ```
 rustup update
-rustup install nightly
-rustup default nightly
 
 rustup target add armv7r-none-eabi
 cargo install cargo-binutils

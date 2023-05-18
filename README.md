@@ -6,8 +6,6 @@
 
 主に Xilinx社の ZynqMP にある RPU(Cortex-R5) をターゲットにしております。
 
-なお、現在、ZynqMP の PL(FPGA部)を使った RTOS を Jelly-RTOS として開発しております。
-
 
 ## ZynqMP 環境
 
@@ -22,10 +20,25 @@ sudo apt install libnewlib-arm-none-eabi
 
 ```
 rustup update
-rustup install nightly
-rustup default nightly
 
 rustup target add armv7r-none-eabi
 cargo install cargo-binutils
 rustup component add llvm-tools-preview
 ```
+
+## サンプルプログラム
+
+samples ディレクトリ以下にあります。
+
+- hello  RPUを使わない通常の Linux環境下でのサンプル
+- zynqmp_rpu_hello RPUでの簡単なサンプル
+- zynqmp_rpu_no_kernel カーネルを使わないベアメタルのサンプル
+
+
+## 姉妹品
+
+カーネルを PL ロジックで書いてしまおうとい試みも行っております。
+
+- https://github.com/ryuz/jelly/tree/master/projects/kv260/kv260_rtos_sample
+- https://github.com/ryuz/jelly/tree/master/projects/ultra96v2/ultra96v2_rtos
+
