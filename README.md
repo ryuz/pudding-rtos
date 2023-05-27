@@ -39,6 +39,6 @@ samples ディレクトリ以下にあります。
 
 カーネルを PL ロジックで書いてしまおうとい試みも行っております。
 
-- https://github.com/ryuz/jelly/tree/master/projects/kv260/kv260_rtos_sample
+- https://github.com/ryuz/jelly/tree/master/projects/kv260/kv260_rtos
 - https://github.com/ryuz/jelly/tree/master/projects/ultra96v2/ultra96v2_rtos
 
