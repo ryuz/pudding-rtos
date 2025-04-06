@@ -72,7 +72,7 @@ pub unsafe extern "C" fn main() -> ! {
     kernel::set_debug_print(Some(debug_print));
 
     kernel::initialize();
-    kernel::interrupt::initialize(&mut STACK_INT);
+    kernel::interrupt::initialize(&mut STACK_INT[..]);
 
     kernel::irc::pl390::initialize(0xf9001000, 0xf9000000);
     let pl390 = pudding_kernel::irc::pl390::take();

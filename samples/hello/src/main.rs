@@ -1,3 +1,5 @@
+#![allow(static_mut_refs)]
+
 use kernel::*;
 use pudding_kernel as kernel;
 

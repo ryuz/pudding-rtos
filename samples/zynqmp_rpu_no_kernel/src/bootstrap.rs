@@ -128,8 +128,8 @@ pub unsafe extern "C" fn bootstrap() {
         static mut ___bss_end: u8;
     }
 
-    let count = &___bss_end as *const u8 as usize - &___bss as *const u8 as usize;
-    ptr::write_bytes(&mut ___bss as *mut u8, 0, count);
+    let count = &raw const ___bss_end as *const u8 as usize - &raw const ___bss as *const u8 as usize;
+    ptr::write_bytes(&raw mut ___bss as *mut u8, 0, count);
 
     //    let count = &_edata as *const u8 as usize - &_sdata as *const u8 as usize;
     //    ptr::copy_nonoverlapping(&_sidata as *const u8, &mut _sdata as *mut u8, count);

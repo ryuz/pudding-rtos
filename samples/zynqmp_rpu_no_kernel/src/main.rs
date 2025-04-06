@@ -23,7 +23,7 @@ fn panic(_panic: &PanicInfo<'_>) -> ! {
 }
 
 // 割り込みコントローラ
-static mut PL390: Pl390 = Pl390 {
+const PL390: Pl390 = Pl390 {
     icc: 0xf9001000,
     icd: 0xf9000000,
 };
@@ -91,7 +91,7 @@ pub fn timer_handler() {
 
 // 割り込み関連の初期化
 unsafe fn irq_initialize() {
-    let pl390 = &mut PL390;
+    let pl390 = &PL390;
 
     // 初期化
     pl390.initialize();

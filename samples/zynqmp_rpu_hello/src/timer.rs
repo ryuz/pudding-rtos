@@ -10,7 +10,7 @@ use pudding_pac::cdns::ttc::*;
 const TTC_ADDRESS: usize = 0xff130000;
 const TTC_INTNO: usize = 74;
 
-static mut TTC: Ttc = Ttc {
+const TTC: Ttc = Ttc {
     address: TTC_ADDRESS,
 };
 
@@ -39,11 +39,9 @@ pub fn timer_initialize(timer_int_handler: fn()) {
 }
 
 pub fn timer_get_counter_value() -> u32 {
-    unsafe { TTC.get_counter_value(Timer::Timer2) }
+    TTC.get_counter_value(Timer::Timer2)
 }
 
 pub fn timer_clear_interrupt() {
-    unsafe {
-        TTC.clear_interrupt(Timer::Timer1);
-    }
+    TTC.clear_interrupt(Timer::Timer1);
 }
