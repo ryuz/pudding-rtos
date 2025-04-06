@@ -35,7 +35,7 @@ rustup update
 
 rustup target add armv7r-none-eabi
 cargo install cargo-binutils
-rustup component add llvm-tools-preview
+rustup component add llvm-tools
 ```
 
 
